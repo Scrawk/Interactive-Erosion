@@ -45,7 +45,7 @@ namespace InterativeErosionProject
         public float m_minTiltAngle = 0.1f; //A higher value will increase erosion on flat areas
         public float m_regolithDamping = 0.85f; //Viscosity of regolith
         /// <summary> Viscosity of water</summary>        
-        public float m_waterDamping = 0.0f;         
+        public float m_waterDamping = 0.0f;
         public float m_maxRegolith = 0.008f; //Higher number will increase dissolution rate
         public Vector4 m_talusAngle = new Vector4(45.0f, 20.0f, 15.0f, 15.0f); //The angle that slippage will occur
 
@@ -56,7 +56,7 @@ namespace InterativeErosionProject
         private RenderTexture m_tiltAngle, m_slippageHeight, m_slippageOutflow;
         private RenderTexture[] m_regolithField, m_regolithOutFlow;
 
-        private RenderTexture m_rainMask;
+        public RenderTexture m_rainMask;
 
         private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom;
 
@@ -134,10 +134,11 @@ namespace InterativeErosionProject
             m_terrainField[1].filterMode = FilterMode.Point;
             m_terrainField[1].name = "Terrain Field 1";
 
-            m_rainMask =  new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
+            m_rainMask = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
             m_rainMask.wrapMode = TextureWrapMode.Clamp;
             m_rainMask.filterMode = FilterMode.Point;
             m_rainMask.name = "Rain mask";
+            //m_rainMask.
 
             m_waterOutFlow[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
             m_waterOutFlow[0].wrapMode = TextureWrapMode.Clamp;
@@ -228,19 +229,12 @@ namespace InterativeErosionProject
         private void RainInput()
         {
 
-            if (Input.GetKey(KeyCode.DownArrow)) m_waterInputPoint.y -= m_waterInputSpeed * Time.deltaTime;
-
-            if (Input.GetKey(KeyCode.UpArrow)) m_waterInputPoint.y += m_waterInputSpeed * Time.deltaTime;
-
-            if (Input.GetKey(KeyCode.LeftArrow)) m_waterInputPoint.x -= m_waterInputSpeed * Time.deltaTime;
-
-            if (Input.GetKey(KeyCode.RightArrow)) m_waterInputPoint.x += m_waterInputSpeed * Time.deltaTime;
-
             if (m_rainInputAmount > 0.0f)
             {
-                m_waterInputMat.SetVector("_Point", m_waterInputPoint);
-                m_waterInputMat.SetFloat("_Radius", m_waterInputRadius);
-                m_waterInputMat.SetFloat("_Amount", m_waterInputAmount);
+                //m_waterInputMat.SetVector("_Point", m_waterInputPoint);
+                //m_waterInputMat.SetFloat("_Radius", m_waterInputRadius);
+                //m_waterInputMat.SetFloat("_Amount", m_waterInputAmount);
+                m_waterInputMat.SetTexture("_MainTex", m_rainMask);
 
                 Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_waterInputMat);
                 RTUtility.Swap(m_waterField);
@@ -475,7 +469,7 @@ namespace InterativeErosionProject
             RTUtility.SetToPoint(m_waterField);
 
             //RainInput();
-            //WaterInput();
+            WaterInput();
 
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
