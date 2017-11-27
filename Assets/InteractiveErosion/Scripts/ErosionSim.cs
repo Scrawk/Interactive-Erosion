@@ -56,7 +56,7 @@ namespace InterativeErosionProject
         private RenderTexture m_tiltAngle, m_slippageHeight, m_slippageOutflow;
         private RenderTexture[] m_regolithField, m_regolithOutFlow;
 
-        public RenderTexture m_rainMask;
+
 
         private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom;
 
@@ -134,11 +134,6 @@ namespace InterativeErosionProject
             m_terrainField[1].filterMode = FilterMode.Point;
             m_terrainField[1].name = "Terrain Field 1";
 
-            m_rainMask = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
-            m_rainMask.wrapMode = TextureWrapMode.Clamp;
-            m_rainMask.filterMode = FilterMode.Point;
-            m_rainMask.name = "Rain mask";
-            //m_rainMask.
 
             m_waterOutFlow[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
             m_waterOutFlow[0].wrapMode = TextureWrapMode.Clamp;
@@ -229,20 +224,18 @@ namespace InterativeErosionProject
         private void RainInput()
         {
 
-            if (m_rainInputAmount > 0.0f)
-            {
-                //m_waterInputMat.SetVector("_Point", m_waterInputPoint);
-                //m_waterInputMat.SetFloat("_Radius", m_waterInputRadius);
-                //m_waterInputMat.SetFloat("_Amount", m_waterInputAmount);
-                m_waterInputMat.SetTexture("_MainTex", m_rainMask);
+            //if (m_rainInputAmount > 0.0f)
+            //{
+            //    m_evaprationMat.SetFloat("_EvaporationConstant", m_rainInputAmount * -1f);
 
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_waterInputMat);
-                RTUtility.Swap(m_waterField);
-            }
+            //    Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_evaprationMat);
+            //    RTUtility.Swap(m_waterField);
+            //}
+            float totalWaterRemove = m_rainInputAmount * -1f + m_evaporationConstant;
 
-            if (m_evaporationConstant > 0.0f)
+            if (totalWaterRemove != 0.0f)
             {
-                m_evaprationMat.SetFloat("_EvaporationConstant", m_evaporationConstant);
+                m_evaprationMat.SetFloat("_EvaporationConstant", totalWaterRemove);
 
                 Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_evaprationMat);
                 RTUtility.Swap(m_waterField);
@@ -468,8 +461,8 @@ namespace InterativeErosionProject
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
 
-            //RainInput();
-            WaterInput();
+            RainInput();
+            //WaterInput();
 
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
