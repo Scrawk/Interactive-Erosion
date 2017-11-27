@@ -34,7 +34,5 @@ sysinfo.txt
 /[Rr]eserv/
 
 # my edits
-dev.log
-*.dat
-Assets/ClassDiagram.cd
 /MyTemp/
+*.dat

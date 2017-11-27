@@ -27,11 +27,11 @@ namespace InterativeErosionProject
                 move = new Vector3(1, 0, 0) * Time.deltaTime * m_speed;
 
             //move forward
-            if (Input.GetKey(KeyCode.W))
+            if (Input.GetKey(KeyCode.W) || Input.GetAxis("Mouse ScrollWheel") > 0f)
                 move = new Vector3(0, 0, 1) * Time.deltaTime * m_speed;
 
             //move back
-            if (Input.GetKey(KeyCode.S))
+            if (Input.GetKey(KeyCode.S) || Input.GetAxis("Mouse ScrollWheel") < 0f)
                 move = new Vector3(0, 0, -1) * Time.deltaTime * m_speed;
 
             //move up

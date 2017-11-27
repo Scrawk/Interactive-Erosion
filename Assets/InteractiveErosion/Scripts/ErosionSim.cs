@@ -9,8 +9,6 @@ namespace InterativeErosionProject
 
     public class ErosionSim : MonoBehaviour
     {
-       
-
         public GameObject m_sun;
         public Material m_landMat, m_waterMat;
         public Material m_initTerrainMat, m_noiseMat, m_waterInputMat;
@@ -20,6 +18,7 @@ namespace InterativeErosionProject
         public Material m_slippageHeightMat, m_slippageOutflowMat, m_slippageUpdateMat;
         public Material m_disintegrateAndDepositMat, m_applyFreeSlipMat;
 
+        /// <summary> Movement speed of point of water source</summary>
         public float m_waterInputSpeed = 0.01f;
         public Vector2 m_waterInputPoint = new Vector2(0.5f, 0.5f);
         public float m_waterInputAmount = 2.0f;
@@ -42,7 +41,8 @@ namespace InterativeErosionProject
         public float m_evaporationConstant = 0.01f; //Evaporation rate of water
         public float m_minTiltAngle = 0.1f; //A higher value will increase erosion on flat areas
         public float m_regolithDamping = 0.85f; //Viscosity of regolith
-        public float m_waterDamping = 0.0f; //Viscosity of water
+        /// <summary> Viscosity of water</summary>        
+        public float m_waterDamping = 0.0f;         
         public float m_maxRegolith = 0.008f; //Higher number will increase dissolution rate
         public Vector4 m_talusAngle = new Vector4(45.0f, 20.0f, 15.0f, 15.0f); //The angle that slippage will occur
 
@@ -72,7 +72,7 @@ namespace InterativeErosionProject
         private const float PIPE_LENGTH = 1.0f;
         private const float CELL_LENGTH = 1.0f;
         private const float CELL_AREA = 1.0f; //CELL_LENGTH*CELL_LENGTH
-        private const float GRAVITY = 9.81f;
+        public const float GRAVITY = 9.81f;
         private const int READ = 0;
         private const int WRITE = 1;
 
@@ -210,7 +210,9 @@ namespace InterativeErosionProject
             InitMaps();
 
         }
-
+        /// <summary>
+        /// Adds water in point of water source
+        /// </summary>
         private void WaterInput()
         {
 
@@ -266,7 +268,9 @@ namespace InterativeErosionProject
 
             RTUtility.Swap(field);
         }
-
+        /// <summary>
+        ///  Calculates flow of field
+        /// </summary>
         private void OutFlow(RenderTexture[] field, RenderTexture[] outFlow, float damping)
         {
             m_outFlowMat.SetFloat("_TexSize", (float)TEX_SIZE);
@@ -305,7 +309,9 @@ namespace InterativeErosionProject
             RTUtility.Swap(m_terrainField);
             RTUtility.Swap(m_regolithField);
         }
-
+        /// <summary>
+        ///  Calculates water velocity?
+        /// </summary>
         private void WaterVelocity()
         {
             m_waterVelocityMat.SetFloat("_TexSize", (float)TEX_SIZE);
@@ -328,7 +334,9 @@ namespace InterativeErosionProject
                 RTUtility.Swap(m_waterVelocity);
             }
         }
-
+        /// <summary>
+        ///  Calculates Erosion and Depositions?
+        /// </summary>
         private void ErosionAndDeposition()
         {
             m_tiltAngleMat.SetFloat("_TexSize", (float)TEX_SIZE);
@@ -353,7 +361,9 @@ namespace InterativeErosionProject
             RTUtility.Swap(m_terrainField);
             RTUtility.Swap(m_sedimentField);
         }
-
+        /// <summary>
+        ///  Calculates sediment movement?
+        /// </summary>
         private void AdvectSediment()
         {
             m_advectSedimentMat.SetFloat("_TexSize", (float)TEX_SIZE);
@@ -375,7 +385,9 @@ namespace InterativeErosionProject
             Graphics.Blit(m_sedimentField[READ], m_sedimentField[WRITE], m_processMacCormackMat);
             RTUtility.Swap(m_sedimentField);
         }
-
+        /// <summary>
+        ///  Recalculates slippage?
+        /// </summary>
         private void ApplySlippage()
         {
             for (int i = 0; i < TERRAIN_LAYERS; i++)
