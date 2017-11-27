@@ -24,6 +24,9 @@ namespace InterativeErosionProject
         public float m_waterInputAmount = 2.0f;
         public float m_waterInputRadius = 0.008f;
 
+        /// <summary> Movement speed of point of water source</summary>
+        public float m_rainInputAmount = 0.02f;
+
         //Noise settings. Each Component of vector is the setting for a layer
         //ie x is setting for layer 0, y is setting for layer 1 etc
         public int m_seed = 2;
@@ -52,6 +55,8 @@ namespace InterativeErosionProject
         private RenderTexture[] m_advectSediment, m_waterField, m_sedimentField;
         private RenderTexture m_tiltAngle, m_slippageHeight, m_slippageOutflow;
         private RenderTexture[] m_regolithField, m_regolithOutFlow;
+
+        private RenderTexture m_rainMask;
 
         private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom;
 
@@ -98,6 +103,8 @@ namespace InterativeErosionProject
 
         private void Start()
         {
+            m_seed = Random.Range(0, int.MaxValue);
+
             m_waterDamping = Mathf.Clamp01(m_waterDamping);
             m_regolithDamping = Mathf.Clamp01(m_regolithDamping);
 
@@ -126,6 +133,11 @@ namespace InterativeErosionProject
             m_terrainField[1].wrapMode = TextureWrapMode.Clamp;
             m_terrainField[1].filterMode = FilterMode.Point;
             m_terrainField[1].name = "Terrain Field 1";
+
+            m_rainMask =  new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
+            m_rainMask.wrapMode = TextureWrapMode.Clamp;
+            m_rainMask.filterMode = FilterMode.Point;
+            m_rainMask.name = "Rain mask";
 
             m_waterOutFlow[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBHalf);
             m_waterOutFlow[0].wrapMode = TextureWrapMode.Clamp;
@@ -211,7 +223,39 @@ namespace InterativeErosionProject
 
         }
         /// <summary>
-        /// Adds water in point of water source
+        /// Adds water everywhere (and evaporation)
+        /// </summary>
+        private void RainInput()
+        {
+
+            if (Input.GetKey(KeyCode.DownArrow)) m_waterInputPoint.y -= m_waterInputSpeed * Time.deltaTime;
+
+            if (Input.GetKey(KeyCode.UpArrow)) m_waterInputPoint.y += m_waterInputSpeed * Time.deltaTime;
+
+            if (Input.GetKey(KeyCode.LeftArrow)) m_waterInputPoint.x -= m_waterInputSpeed * Time.deltaTime;
+
+            if (Input.GetKey(KeyCode.RightArrow)) m_waterInputPoint.x += m_waterInputSpeed * Time.deltaTime;
+
+            if (m_rainInputAmount > 0.0f)
+            {
+                m_waterInputMat.SetVector("_Point", m_waterInputPoint);
+                m_waterInputMat.SetFloat("_Radius", m_waterInputRadius);
+                m_waterInputMat.SetFloat("_Amount", m_waterInputAmount);
+
+                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_waterInputMat);
+                RTUtility.Swap(m_waterField);
+            }
+
+            if (m_evaporationConstant > 0.0f)
+            {
+                m_evaprationMat.SetFloat("_EvaporationConstant", m_evaporationConstant);
+
+                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_evaprationMat);
+                RTUtility.Swap(m_waterField);
+            }
+        }
+        /// <summary>
+        /// Adds water in point of water source  (and evaporation)
         /// </summary>
         private void WaterInput()
         {
@@ -430,7 +474,8 @@ namespace InterativeErosionProject
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
 
-            WaterInput();
+            //RainInput();
+            //WaterInput();
 
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
