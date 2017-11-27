@@ -1,7 +1,5 @@
-
-// ask about layers visibility
 // what is difference between m_terrainField m_sedimentField m_regolithField
-// move evaporation
+
 
 using UnityEngine;
 using System.Collections;
@@ -35,8 +33,7 @@ namespace InterativeErosionProject
         public float m_waterInputAmount = 2.0f;
         public float m_waterInputRadius = 0.008f;
 
-        /// <summary> Movement speed of point of water source</summary>
-        public float m_rainInputAmount = 0.02f;
+        
 
         //Noise settings. Each Component of vector is the setting for a layer
         //ie x is setting for layer 0, y is setting for layer 1 etc
@@ -45,24 +42,24 @@ namespace InterativeErosionProject
         private Vector4 m_frequency = new Vector4(4f, 100.0f, 200.0f, 200.0f); //A lower value gives larger scale details
         private Vector4 m_lacunarity = new Vector4(3.0f, 3.0f, 3.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
         private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of chage of the noise frequency
-        private Vector4 m_amp = new Vector4(2f, 0.5f, 0.5f, 0.5f); //Amount of terrain in a layer
+        private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
         //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
         private Vector4 m_offset = new Vector4(0.0f, 10.0f, 20.0f, 30.0f);
 
-
+        
         //The number of layers used in the simulation. Must be 1, 2, 3 or, 4
-        private int TERRAIN_LAYERS = 4;
+        private const int TERRAIN_LAYERS = 2;
         /// <summary>
         /// The settings for the erosion. If the value is a vector4 each component is for a layer
         /// </summary>
         //public Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.04f, 0.2f, 0.2f); //How easily the layer dissolves
         //private Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.004f, 0.008f); //How easily the layer dissolves
-        private Vector4 m_dissolvingConstant = new Vector4(0.05f, 0.08f, 0.12f, 0.5f); //How easily the layer dissolves
+        private Vector4 m_dissolvingConstant = new Vector4(0.005f, 0.02f, 0.12f, 0.5f); //How easily the layer dissolves
         /// <summary>
         /// The angle that slippage will occur
         /// </summary>
         //private Vector4 m_talusAngle = new Vector4(45.0f, 20.0f, 15.0f, 7.0f);
-        private Vector4 m_talusAngle = new Vector4(89f, 70f, 50f, 30f);
+        private Vector4 m_talusAngle = new Vector4(80f, 30f, 50f, 30f);
         /// <summary>
         /// How much sediment the water can carry
         /// </summary>
@@ -74,7 +71,9 @@ namespace InterativeErosionProject
         /// <summary>
         /// Evaporation rate of water
         /// </summary>
-        public float m_evaporationConstant = 0.01f;
+        public float m_evaporationConstant = 0.0011f;
+        /// <summary> Movement speed of point of water source</summary>
+        public float m_rainInputAmount = 0.001f;
         /// <summary>
         /// A higher value will increase erosion on flat areas
         /// </summary>
@@ -522,8 +521,9 @@ namespace InterativeErosionProject
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
 
-            //RainInput();
-            WaterInput();
+            RainInput();
+            WaterEvaporate();
+            //WaterInput();
 
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
@@ -534,7 +534,7 @@ namespace InterativeErosionProject
 
             WaterVelocity();
 
-            //WaterEvaporate();
+            
 
             ErosionAndDeposition();
 
