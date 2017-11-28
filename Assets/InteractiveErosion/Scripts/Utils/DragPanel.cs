@@ -2,10 +2,21 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
+using System;
 
-abstract public class DragPanel : MonoBehaviour, IPointerDownHandler, IDragHandler
+interface IRefreshable
 {
+    void Refresh();
+}
+interface IHideable
+{
+    void Hide();
+    void Show();
+}
 
+abstract public class DragPanel : MonoBehaviour, IPointerDownHandler, IDragHandler, IRefreshable, IHideable
+{
+    public abstract void Refresh();
     private Vector2 pointerOffset;
     private RectTransform canvasRectTransform;
     protected RectTransform panelRectTransform;
@@ -61,16 +72,21 @@ abstract public class DragPanel : MonoBehaviour, IPointerDownHandler, IDragHandl
         Vector2 newPointerPosition = new Vector2(clampedX, clampedY);
         return newPointerPosition;
         
-    }
+    }   
     
-    public void hide()
-    {
-        gameObject.SetActive(false);
-    }    
-    virtual public void onCloseClick()
+    public void onCloseClick()
     {
         panelRectTransform.SetAsFirstSibling();
-        hide();
+        Hide();
     }
 
+    public void Hide()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
+    }
 }

@@ -102,7 +102,7 @@ namespace InterativeErosionProject
         /// </summary>
         public float m_maxRegolith = 0.008f;
 
-
+        ///<summary> Meshes</summary>
         private GameObject[] m_gridLand, m_gridWater;
 
         ///<summary> Contains all 4 layers in ARGB</summary>
@@ -581,7 +581,7 @@ namespace InterativeErosionProject
             ErosionAndDeposition();
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
-           // AdvectSediment();
+            AdvectSediment();
 
             //DisintegrateAndDeposit();
             //ApplyFreeSlip(m_terrainField);
@@ -814,4 +814,5 @@ namespace InterativeErosionProject
         }
 
     }
+    
 }
