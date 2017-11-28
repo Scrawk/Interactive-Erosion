@@ -1,5 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
 
 Shader "Erosion/DiffuseVelocity" 
 {
@@ -31,7 +29,7 @@ Shader "Erosion/DiffuseVelocity"
 			v2f vert(appdata_base v)
 			{
     			v2f OUT;
-    			OUT.pos = UnityObjectToClipPos(v.vertex);
+    			OUT.pos = mul(UNITY_MATRIX_MVP, v.vertex);
     			OUT.uv = v.texcoord.xy;
     			return OUT;
 			}

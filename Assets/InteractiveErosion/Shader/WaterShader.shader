@@ -1,5 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
 
 Shader "Erosion/WaterShader" 
 {
@@ -58,7 +56,7 @@ Shader "Erosion/WaterShader"
 			v.vertex.y += GetTotalHeight(tex2Dlod(_MainTex, float4(v.texcoord.xy, 0.0, 0.0))) * _ScaleY;
 			v.vertex.y += tex2Dlod(_WaterField, float4(v.texcoord.xy, 0.0, 0.0)).x * _ScaleY;
 			
-			float4 pos = UnityObjectToClipPos (v.vertex);
+			float4 pos = mul (UNITY_MATRIX_MVP, v.vertex);
 			o.grabUV = ComputeGrabScreenPos(pos);
 			o.projPos = ComputeScreenPos(pos);
 			o.depth = pos.z / pos.w;
