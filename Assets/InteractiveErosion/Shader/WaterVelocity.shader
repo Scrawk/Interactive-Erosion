@@ -1,4 +1,4 @@
-//UNITY_SHADER_NO_UPGRADE
+
 Shader "Erosion/WaterVelocity" 
 {
 	SubShader 

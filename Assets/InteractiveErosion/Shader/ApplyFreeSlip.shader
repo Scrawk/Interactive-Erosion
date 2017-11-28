@@ -1,7 +1,6 @@
 
 Shader "Erosion/ApplyFreeSlip" 
 {
-	//UNITY_SHADER_NO_UPGRADE
 	Properties 
 	{
     	_MainTex("MainTex", 2D) = "black" { }

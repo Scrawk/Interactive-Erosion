@@ -1,7 +1,6 @@
 
 Shader "Erosion/Evaporation" 
 {
-	//UNITY_SHADER_NO_UPGRADE
 	Properties 
 	{
 		_MainTex ("Base (RGB)", 2D) = "white" {}

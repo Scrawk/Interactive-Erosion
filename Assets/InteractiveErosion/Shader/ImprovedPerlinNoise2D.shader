@@ -1,7 +1,7 @@
 
+
 Shader "Noise/ImprovedPerlinNoise2D" 
 {
-	//UNITY_SHADER_NO_UPGRADE
 	Properties 
 	{
     	_MainTex("MainTex", 2D) = "black" { }
