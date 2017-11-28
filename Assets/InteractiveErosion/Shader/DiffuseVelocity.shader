@@ -1,6 +1,7 @@
 
 Shader "Erosion/DiffuseVelocity" 
 {
+	//UNITY_SHADER_NO_UPGRADE
 	Properties 
 	{
     	_MainTex("MainTex", 2D) = "black" { }
