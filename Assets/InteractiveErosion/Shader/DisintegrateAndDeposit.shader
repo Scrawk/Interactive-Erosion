@@ -1,6 +1,7 @@
 
 Shader "Erosion/DisintegrateAndDeposition" 
 {
+	//UNITY_SHADER_NO_UPGRADE
 	SubShader 
 	{
     	Pass 
