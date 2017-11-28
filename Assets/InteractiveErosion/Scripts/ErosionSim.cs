@@ -1,5 +1,4 @@
-// what is difference between m_terrainField m_sedimentField m_regolithField
-// make gui first, than debug
+// what is difference between m_terrainField m_sedimentField m_regolithField?
 
 
 using UnityEngine;
@@ -70,10 +69,10 @@ namespace InterativeErosionProject
         /// <summary>
         /// How much sediment the water can carry
         /// </summary>
-        public float m_sedimentCapacity = 0.2f;
+        private float m_sedimentCapacity = 0.2f;
 
         /// <summary> Rate the sediment is deposited on top layer </summary>
-        public float m_depositionConstant = 0.015f;
+        private float m_depositionConstant = 0.015f;
 
         /// <summary>
         /// Evaporation rate of water
@@ -107,8 +106,8 @@ namespace InterativeErosionProject
         private GameObject[] m_gridLand, m_gridWater;
 
         ///<summary> Contains all 4 layers in ARGB</summary>
-        private RenderTexture[] m_terrainField;
-
+        public RenderTexture[] m_terrainField;
+        
         ///<summary>sediment transport capacity? How much sediment water can hold?</summary>        
         private RenderTexture[] m_advectSediment;
 
@@ -143,15 +142,18 @@ namespace InterativeErosionProject
 
         //The resolution of the textures used for the simulation. You can change this to any number
         //Does not have to be a pow2 number. You will run out of GPU memory if made to high.
-        private const int TEX_SIZE = 1024;
-        //The height of the terrain. You can change this
+        public const int TEX_SIZE = 1024;
+        public const int MAX_TEX_INDEX = 1023;
+
+        ///<summary>The height of the terrain. You can change this</summary>
         private const int TERRAIN_HEIGHT = 128;
         //This is the size and resolution of the terrain mesh you see
         //You can change this but must be a pow2 number, ie 256, 512, 1024 etc
-        private const int TOTAL_GRID_SIZE = 512;
+        public const int TOTAL_GRID_SIZE = 512;
         //You can make this smaller but not larger
         private const float TIME_STEP = 0.1f;
 
+        ///<summary>Size of 1 mesh in meters</summary>
         private const int GRID_SIZE = 128;
         private const float PIPE_LENGTH = 1.0f;
         private const float CELL_LENGTH = 1.0f;
@@ -160,7 +162,8 @@ namespace InterativeErosionProject
         private const int READ = 0;
         private const int WRITE = 1;
 
-        private Texture2D bufferRGHalfTexture;
+        public Texture2D bufferRGHalfTexture;
+        public Texture2D bufferARGBFloatTexture;
         //This will allow you to set a noise style for each terrain layer
         private NOISE_STYLE[] m_layerStyle = new NOISE_STYLE[]
         {
@@ -189,6 +192,10 @@ namespace InterativeErosionProject
             bufferRGHalfTexture.filterMode = FilterMode.Bilinear;
             bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
 
+            bufferARGBFloatTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGBAFloat, false);
+            bufferRGHalfTexture.filterMode = FilterMode.Point;
+            bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
+
             m_seed = Random.Range(0, int.MaxValue);
 
             m_waterDamping = Mathf.Clamp01(m_waterDamping);
@@ -210,7 +217,7 @@ namespace InterativeErosionProject
             m_sedimentField = new RenderTexture[2];
             m_regolithField = new RenderTexture[2];
             m_regolithOutFlow = new RenderTexture[2];
-
+           
             m_terrainField[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBFloat);
             m_terrainField[0].wrapMode = TextureWrapMode.Clamp;
             m_terrainField[0].filterMode = FilterMode.Point;
@@ -353,16 +360,8 @@ namespace InterativeErosionProject
 
             if (Input.GetKey(KeyCode.RightArrow)) m_waterInputPoint.x += m_waterInputSpeed * Time.deltaTime;
 
-            if (m_waterInputAmount > 0.0f)
-            {
-                m_waterInputMat.SetVector("_Point", m_waterInputPoint);
-                m_waterInputMat.SetFloat("_Radius", m_waterInputRadius);
-                m_waterInputMat.SetFloat("_Amount", m_waterInputAmount);
-
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_waterInputMat);
-                RTUtility.Swap(m_waterField);
-            }
-
+            addMaterial(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);
+            
             if (m_evaporationConstant > 0.0f)
             {
                 m_evaprationMat.SetFloat("_EvaporationConstant", m_evaporationConstant);
@@ -512,8 +511,9 @@ namespace InterativeErosionProject
             m_advectSedimentMat.SetFloat("_VelocityFactor", 1.0f);
             m_advectSedimentMat.SetTexture("_VelocityField", m_waterVelocity[READ]);
 
-            Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);
-            //Graphics.Blit(m_sedimentField[READ], m_advectSediment[WRITE], m_advectSedimentMat);
+            //is bug??
+            //Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);
+            Graphics.Blit(m_sedimentField[READ], m_advectSediment[WRITE], m_advectSedimentMat);
 
             m_advectSedimentMat.SetFloat("_VelocityFactor", -1.0f);
             Graphics.Blit(m_advectSediment[READ], m_advectSediment[WRITE], m_advectSedimentMat);
@@ -571,9 +571,9 @@ namespace InterativeErosionProject
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
 
-            //RainInput();
-            //WaterEvaporate();
-            WaterInput();
+            RainInput();
+            ////WaterEvaporate();
+            //WaterInput();
 
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
@@ -589,12 +589,12 @@ namespace InterativeErosionProject
             ApplyFreeSlip(m_sedimentField);
             AdvectSediment();
 
-            //DisintegrateAndDeposit();
-            //ApplyFreeSlip(m_terrainField);
-            //ApplyFreeSlip(m_regolithField);
-            //OutFlow(m_regolithField, m_regolithOutFlow, m_regolithDamping);
+            DisintegrateAndDeposit();
+            ApplyFreeSlip(m_terrainField);
+            ApplyFreeSlip(m_regolithField);
+            OutFlow(m_regolithField, m_regolithOutFlow, m_regolithDamping);
 
-            //ApplySlippage();
+            ApplySlippage();
 
             RTUtility.SetToBilinear(m_terrainField);
             RTUtility.SetToBilinear(m_waterField);
@@ -822,23 +822,59 @@ namespace InterativeErosionProject
         //{
 
         //}
-        public float getData(RenderTexture source, Point point)
+
+        public Vector4 getData4Float32bits(RenderTexture source, Point point)
         {
 
-            // Initialize and render            
-            Camera.main.targetTexture = source;
-            Camera.main.Render();
+            bufferARGBFloatTexture = GetRTPixels(source, bufferARGBFloatTexture);
+            var res = bufferARGBFloatTexture.GetPixel(point.x, point.y);
+            return res;
+        }
+        /// <summary>
+        /// Not supported
+        /// </summary>   
+        //public float getDataRGHalf(RenderTexture source, Point point)
+        //{
+        //    bufferRGHalfTexture = GetRTPixels(source, bufferRGHalfTexture);
+        //    var res = bufferRGHalfTexture.GetPixel(point.x, point.y);
+        //    return res.a;
+        //}
+        // Get the contents of a RenderTexture into a Texture2D
+        static public Texture2D GetRTPixels(RenderTexture source, Texture2D destination)
+        {
+            // Remember currently active render texture
+            RenderTexture currentActiveRT = RenderTexture.active;
+
+            // Set the supplied RenderTexture as the active one
             RenderTexture.active = source;
-            // Read pixels from camera (screen)
-            var rect = new Rect(0, 0, TEX_SIZE, TEX_SIZE);
-            bufferRGHalfTexture.ReadPixels(rect, 0, 0);
-            var res = bufferRGHalfTexture.GetPixel(point.x, point.y);
-            // Clean up
-            Camera.main.targetTexture = null;
-            // added to avoid errors 
-            RenderTexture.active = null;
-            //DestroyImmediate(rt);
-            return res.a;
+
+            // Create a new Texture2D and read the RenderTexture image into it
+            //Texture2D tex = new Texture2D(source.width, source.height);
+            destination.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+
+            // Restore previously active render texture
+            RenderTexture.active = currentActiveRT;
+            return destination;
+        }
+        public void addTerrain(int layer, Vector2 point, float radius, float amount)
+        {
+            //addMaterial()
+        }
+        public void addWater( Vector2 point, float radius, float amount)
+        {
+            addMaterial(m_waterField, point, radius, amount);
+        }
+        private void addMaterial(RenderTexture[] where, Vector2 point, float radius, float amount)
+        {   
+            if (amount != 0f)
+            {
+                m_waterInputMat.SetVector("_Point", point);
+                m_waterInputMat.SetFloat("_Radius", radius);
+                m_waterInputMat.SetFloat("_Amount", amount);
+
+                Graphics.Blit(where[READ], where[WRITE], m_waterInputMat);
+                RTUtility.Swap(where);
+            }           
         }
     }
 

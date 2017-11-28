@@ -19,15 +19,36 @@ namespace InterativeErosionProject
             return "x = " + x + "; y = " + y;
         }
     }
-    //public static class IntExtensions
-    //{
-    //    public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
-    //    {
-    //        if (val.CompareTo(min) < 0) return min;
-    //        else if (val.CompareTo(max) > 0) return max;
-    //        else return val;
-    //    }
-    //}
+    public class Action
+    {
+        private readonly string name;
+        static private readonly List<Action> list = new List<Action>();
+        static public Action Nothing = new Action("Nothing");
+        static public Action Add = new Action("Add");
+        static public Action Remove = new Action("Remove");
+        static public Action Info = new Action("Info");
+        private Action(string name)
+        {
+            this.name = name;
+            list.Add(this);
+        }
+        static public IEnumerable<Action> getAllPossible()
+        {
+            foreach (var item in list)
+            {
+                yield return item;
+            }
+        }
+        public override string ToString()
+        {
+            return name;
+        }
+
+        internal static Action getById(int value)
+        {
+            return list[value];
+        }
+    }
     public class Player : MonoBehaviour
     {
         public GameObject mapPointer;
@@ -36,68 +57,69 @@ namespace InterativeErosionProject
 
         [SerializeField]
         private Plane referencePlane = new Plane(Vector3.up, Vector3.zero);
-        public enum Action { nothing, dig, rise, info, spring }
-        static public Action selectedAction = Action.info;
-        static public Point selectedPoint;
 
+        static public Point selectedPoint;
+        static public Action selectedAction;
+        internal static Materials selectedMaterial;
 
         void Update()
         {
-            //HexVertex found = null;
-
-            if (Player.selectedAction != Player.Action.nothing && Input.GetMouseButton(0))
+            if (selectedAction != Action.Nothing && Input.GetMouseButton(0))
             {
-                //CastFindVertex();
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                float rayDistance;
-                if (referencePlane.Raycast(ray, out rayDistance))
+                var clickedPosition = raycastSelectedPoint();
+
+                if (selectedPoint == null)
+                    mapPointer.SetActive(false);
+                else
                 {
-                    // convert this to texture UV
-                    var clickedPosition = ray.GetPoint(rayDistance);
-                    int TOTAL_GRID_SIZE = 512;
-                    int xInTexture = (int)(clickedPosition.x + TOTAL_GRID_SIZE / 2);
-                    int yInTexture = (int)(clickedPosition.y + TOTAL_GRID_SIZE / 2);
+                    mapPointer.SetActive(true);
+                    mapPointer.transform.position = clickedPosition;
 
-                    if (xInTexture >= 0 && xInTexture < TOTAL_GRID_SIZE
-                        && yInTexture >= 0 && yInTexture < TOTAL_GRID_SIZE)
-                        selectedPoint = new Point(xInTexture, yInTexture);
-                    else
-                        selectedPoint = null;
-
-                    if (selectedPoint == null)
-                        mapPointer.SetActive(false);
-                    else
+                    // lift pointer at terrain height
+                    var vector4 = sim.getData4Float32bits(sim.m_terrainField[0], Player.selectedPoint);
+                    var height = vector4.x + vector4.y + vector4.z + vector4.w;
+                    height *= (float)ErosionSim.TOTAL_GRID_SIZE / (float)ErosionSim.TEX_SIZE;
+                    height += 12f;
+                    mapPointer.transform.position = new Vector3(mapPointer.transform.position.x, mapPointer.transform.position.y + height, mapPointer.transform.position.z);
+                    if (Input.GetMouseButton(0))
                     {
-                        mapPointer.SetActive(true);
-                        mapPointer.transform.position = clickedPosition;
-                        
-                    }
-                }
-
-                //var found = map.findVertexByNumber(CastFindVertex());
-                //if (found != null && Input.GetMouseButton(0))
-                {
-                    //selectedVertex = found;
-                    switch (Player.selectedAction)
-                    {
-                        case Player.Action.dig:
-                            //found.setGroundLevel(Application.safeRound(found.getGroundLevel() + oneStepGroundChange * -1f));
-                            break;
-
-                        case Player.Action.rise:
-                            //found.setGroundLevel(Application.safeRound(found.getGroundLevel() + oneStepGroundChange));
-                            break;
-                        case Player.Action.spring:
-                            //found.setWaterLevel(Application.safeRound(found.getWaterLevel() + oneStepWaterChange));
-                            break;
-                        case Player.Action.info:
+                        if (selectedAction == Action.Add)
+                        {
+                            if (selectedMaterial == Materials.water)
+                                sim.addWater(new Vector2((float)selectedPoint.x / ErosionSim.MAX_TEX_INDEX, (float)selectedPoint.y / ErosionSim.MAX_TEX_INDEX), 0.001f, 10f);
+                        }
+                        if (selectedAction == Action.Remove)
+                        {
+                            if (selectedMaterial == Materials.water)
+                                sim.addWater(new Vector2((float)selectedPoint.x / ErosionSim.MAX_TEX_INDEX, (float)selectedPoint.y / ErosionSim.MAX_TEX_INDEX), 0.001f, -10f);
+                        }
+                        else if (selectedAction == Action.Info)
                             infoWindow.Show();
-                            break;
                     }
                 }
-                // if (found != null && this.active)
-                //Refresh();
             }
+        }
+        private Vector3 raycastSelectedPoint()
+        {
+            Vector3 clickedPosition = default(Vector3);
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            float rayDistance;
+            if (referencePlane.Raycast(ray, out rayDistance))
+            {
+                // convert this to texture UV
+                clickedPosition = ray.GetPoint(rayDistance);
+
+                int xInTexture = (int)(clickedPosition.x * 2f + ErosionSim.TOTAL_GRID_SIZE);
+                int yInTexture = (int)((clickedPosition.z) * 2f + ErosionSim.TOTAL_GRID_SIZE);
+
+                if (xInTexture >= 0 && xInTexture <= ErosionSim.MAX_TEX_INDEX
+                    && yInTexture >= 0 && yInTexture <= ErosionSim.MAX_TEX_INDEX)
+                    selectedPoint = new Point(xInTexture, yInTexture);
+                else
+                    selectedPoint = null;
+            }
+            return clickedPosition;
         }
     }
 }
+

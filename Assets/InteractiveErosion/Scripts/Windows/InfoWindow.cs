@@ -15,7 +15,13 @@ namespace InterativeErosionProject
             {
                 var sb = new StringBuilder();
                 sb.Append("Selected point: ").Append(Player.selectedPoint);
-                sb.Append("Water velocity: ").Append(sim.getData(sim.m_waterVelocity[0], Player.selectedPoint));
+                //sb.Append("Water velocity: ").Append(sim.getDataRGHalf(sim.m_waterVelocity[0], Player.selectedPoint));
+
+                var vector4 = sim.getData4Float32bits(sim.m_terrainField[0], Player.selectedPoint);
+                var height = vector4.x + vector4.y + vector4.z + vector4.w;
+
+
+                sb.Append("\nGround height: ").Append(height);
                 text.text = sb.ToString();
             }
             else
