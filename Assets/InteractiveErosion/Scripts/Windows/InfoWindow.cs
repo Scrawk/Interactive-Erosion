@@ -1,64 +1,38 @@
 ﻿
 using System.Collections;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
-
-public class InfoWindow : DragPanel
+namespace InterativeErosionProject
 {
-    public Text text;
-    //private Camera myCamera;
-    public GameObject mapPointer;
-    [SerializeField]
-    public Plane referencePlane = new Plane(Vector3.up, Vector3.zero);    
-    public override void Refresh()
+    public class InfoWindow : DragPanel
     {
-        text.text = "test";
-    }
-
-    // Use this for initialization
-    void Start()
-    {
-       
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-        // HexVertex found = null;
-        
-        if (Player.action != Player.Action.nothing && Input.GetMouseButton(0))
+        public Text text;
+        public ErosionSim sim;
+        public override void Refresh()
         {
-            //CastFindVertex();
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            float rayDistance;
-            if (referencePlane.Raycast(ray, out rayDistance))
-                mapPointer.transform.position = ray.GetPoint(rayDistance);
-
-            //var found = map.findVertexByNumber(CastFindVertex());
-            //if (found != null && Input.GetMouseButton(0))
+            if (Player.selectedPoint != null)
             {
-                //selectedVertex = found;
-                switch (Player.action)
-                {
-                    case Player.Action.dig:
-                        //found.setGroundLevel(Application.safeRound(found.getGroundLevel() + oneStepGroundChange * -1f));
-                        break;
-
-                    case Player.Action.rise:
-                        //found.setGroundLevel(Application.safeRound(found.getGroundLevel() + oneStepGroundChange));
-                        break;
-                    case Player.Action.spring:
-                        //found.setWaterLevel(Application.safeRound(found.getWaterLevel() + oneStepWaterChange));
-                        break;
-                    case Player.Action.info:
-                        Show();
-                        break;
-                }
+                var sb = new StringBuilder();
+                sb.Append("Selected point: ").Append(Player.selectedPoint);
+                sb.Append("Water velocity: ").Append(sim.getData(sim.m_waterVelocity[0], Player.selectedPoint));
+                text.text = sb.ToString();
             }
-            // if (found != null && this.active)
-            //Refresh();
+            else
+                text.text = "select point";
         }
-        Refresh();
-    }    
+
+        // Use this for initialization
+        void Start()
+        {
+
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+            Refresh();
+        }
+    }
 }

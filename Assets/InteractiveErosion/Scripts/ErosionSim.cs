@@ -35,7 +35,7 @@ namespace InterativeErosionProject
         public float m_waterInputAmount = 2.0f;
         public float m_waterInputRadius = 0.008f;
 
-        private int m_seed = 0 ;
+        private int m_seed = 0;
 
         //Noise settings. Each Component of vector is the setting for a layer
         //ie x is setting for layer 0, y is setting for layer 1 etc
@@ -44,19 +44,20 @@ namespace InterativeErosionProject
         private Vector4 m_frequency = new Vector4(2f, 100.0f, 200.0f, 200.0f); //A lower value gives larger scale details
         private Vector4 m_lacunarity = new Vector4(2.0f, 3.0f, 3.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
         private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of chage of the noise frequency
-        //private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
+                                                                      //private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
         private Vector4 m_amp = new Vector4(2.0f, 0.01f, 0.01f, 0.001f); //Amount of terrain in a layer        
-        //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
+                                                                         //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
         private Vector4 m_offset = new Vector4(0.0f, 10.0f, 20.0f, 30.0f);
 
-        
+
         //The number of layers used in the simulation. Must be 1, 2, 3 or, 4
         private const int TERRAIN_LAYERS = 4;
         /// <summary>
         /// The settings for the erosion. If the value is a vector4 each component is for a layer
         /// How easily the layer dissolves
         /// </summary>
-        public Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.04f, 0.2f, 1f); //How easily the layer dissolves
+        public Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.04f, 0.2f, 1f);
+        //How easily the layer dissolves
         //private Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.004f, 0.008f); //How easily the layer dissolves
         //private Vector4 m_dissolvingConstant = new Vector4(0.005f, 0.02f, 0.12f, 0.5f); 
         //private Vector4 m_dissolvingConstant = new Vector4(0.0001f, 0.001f, 0.01f, 0.1f);
@@ -112,7 +113,7 @@ namespace InterativeErosionProject
         private RenderTexture[] m_advectSediment;
 
         ///<summary> Contains sediment amount. What is sediment? Actual amount of sediment in water?</summary>
-        private RenderTexture[] m_sedimentField;        
+        private RenderTexture[] m_sedimentField;
 
         ///<summary> Contains regolith amount.Regolith is quasi-liquid at the bottom of water flow</summary>
         private RenderTexture[] m_regolithField;
@@ -127,7 +128,7 @@ namespace InterativeErosionProject
         private RenderTexture[] m_waterOutFlow;
 
         ///<summary> Water speed (1 channel)</summary>
-        private RenderTexture[] m_waterVelocity;        
+        public RenderTexture[] m_waterVelocity;
 
         ///<summary> Contains surface angels for each point</summary>
         private RenderTexture m_tiltAngle;
@@ -159,6 +160,7 @@ namespace InterativeErosionProject
         private const int READ = 0;
         private const int WRITE = 1;
 
+        private Texture2D bufferRGHalfTexture;
         //This will allow you to set a noise style for each terrain layer
         private NOISE_STYLE[] m_layerStyle = new NOISE_STYLE[]
         {
@@ -182,6 +184,10 @@ namespace InterativeErosionProject
         private void Start()
         {
             Application.runInBackground = true;
+
+            bufferRGHalfTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGHalf, false);
+            bufferRGHalfTexture.filterMode = FilterMode.Bilinear;
+            bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
 
             m_seed = Random.Range(0, int.MaxValue);
 
@@ -331,7 +337,7 @@ namespace InterativeErosionProject
                 Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_evaprationMat);
                 RTUtility.Swap(m_waterField);
             }
-           
+
         }
         /// <summary>
         /// Adds water in point of water source  (and evaporation)
@@ -506,8 +512,8 @@ namespace InterativeErosionProject
             m_advectSedimentMat.SetFloat("_VelocityFactor", 1.0f);
             m_advectSedimentMat.SetTexture("_VelocityField", m_waterVelocity[READ]);
 
-            //Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);
-            Graphics.Blit(m_sedimentField[READ], m_advectSediment[WRITE], m_advectSedimentMat);
+            Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);
+            //Graphics.Blit(m_sedimentField[READ], m_advectSediment[WRITE], m_advectSedimentMat);
 
             m_advectSedimentMat.SetFloat("_VelocityFactor", -1.0f);
             Graphics.Blit(m_advectSediment[READ], m_advectSediment[WRITE], m_advectSedimentMat);
@@ -812,7 +818,28 @@ namespace InterativeErosionProject
 
             return mesh;
         }
+        //public float getTerrainHeight(Vector3 point)
+        //{
 
+        //}
+        public float getData(RenderTexture source, Point point)
+        {
+
+            // Initialize and render            
+            Camera.main.targetTexture = source;
+            Camera.main.Render();
+            RenderTexture.active = source;
+            // Read pixels from camera (screen)
+            var rect = new Rect(0, 0, TEX_SIZE, TEX_SIZE);
+            bufferRGHalfTexture.ReadPixels(rect, 0, 0);
+            var res = bufferRGHalfTexture.GetPixel(point.x, point.y);
+            // Clean up
+            Camera.main.targetTexture = null;
+            // added to avoid errors 
+            RenderTexture.active = null;
+            //DestroyImmediate(rt);
+            return res.a;
+        }
     }
-    
+
 }

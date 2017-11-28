@@ -4,19 +4,21 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System;
 
-interface IRefreshable
+public interface IRefreshable
 {
     void Refresh();
 }
-interface IHideable
+public interface IHideable
 {
     void Hide();
     void Show();
 }
-
-abstract public class DragPanel : MonoBehaviour, IPointerDownHandler, IDragHandler, IRefreshable, IHideable
+abstract public class Window : MonoBehaviour, IRefreshable
 {
     public abstract void Refresh();
+}
+abstract public class DragPanel : Window, IPointerDownHandler, IDragHandler, IHideable
+{    
     private Vector2 pointerOffset;
     private RectTransform canvasRectTransform;
     protected RectTransform panelRectTransform;
