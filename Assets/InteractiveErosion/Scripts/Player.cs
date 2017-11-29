@@ -76,8 +76,7 @@ namespace InterativeErosionProject
                     mapPointer.transform.position = clickedPosition;
 
                     // lift pointer at terrain height
-                    var vector4 = sim.getData4Float32bits(sim.m_terrainField[0], Player.selectedPoint);
-                    var height = vector4.x + vector4.y + vector4.z + vector4.w;
+                    var height = sim.getTerrainLevel(Player.selectedPoint);                     
                     height *= (float)ErosionSim.TOTAL_GRID_SIZE / (float)ErosionSim.TEX_SIZE;
                     height += 12f;
                     mapPointer.transform.position = new Vector3(mapPointer.transform.position.x, mapPointer.transform.position.y + height, mapPointer.transform.position.z);
@@ -98,6 +97,19 @@ namespace InterativeErosionProject
                     }
                 }
             }
+        }
+        static private bool runSimulation = false;
+        static public void StartSimulation()
+        {
+            runSimulation = true;
+        }
+        static public void PauseSimulation()
+        {
+            runSimulation = false;
+        }
+        static public bool isSimulationOn()
+        {
+            return runSimulation;
         }
         private Vector3 raycastSelectedPoint()
         {

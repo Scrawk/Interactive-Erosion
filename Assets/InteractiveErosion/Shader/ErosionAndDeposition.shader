@@ -64,12 +64,12 @@ Shader "Erosion/ErosionAndDeposition"
 				finalMaxSediment.w = sedimentCapacityFactor;
 
 				float4 terrainDif = float4( 0.0, 0.0, 0.0, 0.0 );	
-				float totalSedimentDif = 0.0;
+				float finalSedimentDif = 0.0;
 				
 				if(sediment > sedimentCapacityFactor)
 				{
 					float sedimentDif = _DepositionConstant * (sediment - sedimentCapacityFactor);		
-					totalSedimentDif -= sedimentDif;	
+					finalSedimentDif -= sedimentDif;	
 					terrainDif = GetTopmostLayerVec() * sedimentDif;	
 				}	
 				else
@@ -81,17 +81,17 @@ Shader "Erosion/ErosionAndDeposition"
 					{	
 						if(k < _Layers) 
 						{
-							float maxS = finalMaxSediment[k] - layersHeight;
+							float maxSedimentInLayer = finalMaxSediment[k] - layersHeight;
 							
-							if(maxS < sediment) break;
+							if(maxSedimentInLayer < sediment) break;
 
 							layersHeight += terrain[k];
-							float sedimentDif = _DissolvingConstant[k] * (maxS - sediment);
+							float sedimentDif = _DissolvingConstant[k] * (maxSedimentInLayer - sediment);
 							
 							//limit the dissolution to the actual layer thickness
 							if(k > 0) sedimentDif  = min(terrain[k], sedimentDif);
 							
-							totalSedimentDif += sedimentDif;
+							finalSedimentDif += sedimentDif;
 							terrainDif = terrainDif - sedimentDif * layerMask;					
 						}
 						
@@ -102,7 +102,7 @@ Shader "Erosion/ErosionAndDeposition"
 				f2a OUT;
 				
 				OUT.col0 = terrain + terrainDif;
-				OUT.col1 = float4(sediment + totalSedimentDif, 0.0, 0.0 ,0.0);	
+				OUT.col1 = float4(sediment + finalSedimentDif, 0.0, 0.0 ,0.0);	
 				
 				return OUT;
 			}

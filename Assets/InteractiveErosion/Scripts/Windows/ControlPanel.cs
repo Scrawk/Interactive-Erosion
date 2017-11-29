@@ -9,8 +9,6 @@ namespace InterativeErosionProject
 {
     enum Materials
     {
-        //bedrock, stone, clay, sand,
-        water
     }
 
     public class ControlPanel : Window
@@ -59,6 +57,13 @@ namespace InterativeErosionProject
         public void onMaterialChoiseDDChanged()
         {
             Player.selectedMaterial = (Materials)materialChoiseDD.value;
+        }
+        public void OnSimulateTglChanged(bool value)
+        {
+            if (value)
+                Player.StartSimulation();
+            else
+                Player.PauseSimulation();
         }
     }
 }

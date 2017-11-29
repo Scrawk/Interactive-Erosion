@@ -1,10 +1,12 @@
 // what is difference between m_terrainField m_sedimentField m_regolithField?
-
+// good browni 51381BFF
+// good red 552710FF
 
 using UnityEngine;
 using System.Collections;
 
 using ImprovedPerlinNoiseProject;
+using System;
 
 namespace InterativeErosionProject
 {
@@ -28,6 +30,8 @@ namespace InterativeErosionProject
         public Material m_slippageHeightMat, m_slippageOutflowMat, m_slippageUpdateMat;
         public Material m_disintegrateAndDepositMat, m_applyFreeSlipMat;
 
+
+
         /// <summary> Movement speed of point of water source</summary>
         public float m_waterInputSpeed = 0.01f;
         public Vector2 m_waterInputPoint = new Vector2(0.5f, 0.5f);
@@ -40,12 +44,15 @@ namespace InterativeErosionProject
         //ie x is setting for layer 0, y is setting for layer 1 etc
 
         private Vector4 m_octaves = new Vector4(8, 8, 8, 8); //Higher octaves give more finer detail
-        private Vector4 m_frequency = new Vector4(2f, 100.0f, 200.0f, 200.0f); //A lower value gives larger scale details
+        private Vector4 m_frequency = new Vector4(2f, 3.0f, 4.0f, 4.0f); //A lower value gives larger scale details
         private Vector4 m_lacunarity = new Vector4(2.0f, 3.0f, 3.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
         private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of chage of the noise frequency
-                                                                      //private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
-        private Vector4 m_amp = new Vector4(2.0f, 0.01f, 0.01f, 0.001f); //Amount of terrain in a layer        
-                                                                         //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
+
+        //private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
+        static private float terrainAmountScale = 0.3f;
+        private Vector4 m_amp = new Vector4(8.0f*terrainAmountScale, 2f * terrainAmountScale, 1f * terrainAmountScale, 0.1f * terrainAmountScale); //Amount of terrain in a layer        
+        
+                                                                   //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
         private Vector4 m_offset = new Vector4(0.0f, 10.0f, 20.0f, 30.0f);
 
 
@@ -55,16 +62,16 @@ namespace InterativeErosionProject
         /// The settings for the erosion. If the value is a vector4 each component is for a layer
         /// How easily the layer dissolves
         /// </summary>
-        public Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.04f, 0.2f, 1f);
-        //How easily the layer dissolves
-        //private Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.004f, 0.008f); //How easily the layer dissolves
-        //private Vector4 m_dissolvingConstant = new Vector4(0.005f, 0.02f, 0.12f, 0.5f); 
+        //public Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.04f, 0.2f, 1f); // rain
+
+        //private Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.004f, 0.008f); 
+        private Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.015f, 0.8f, 1.2f);
         //private Vector4 m_dissolvingConstant = new Vector4(0.0001f, 0.001f, 0.01f, 0.1f);
         /// <summary>
         /// The angle that slippage will occur
         /// </summary>
         //private Vector4 m_talusAngle = new Vector4(45.0f, 20.0f, 15.0f, 7.0f);
-        private Vector4 m_talusAngle = new Vector4(80f, 60f, 40f, 20f);
+        private Vector4 m_talusAngle = new Vector4(80f, 35f, 60f, 7f);
 
         /// <summary>
         /// How much sediment the water can carry
@@ -107,35 +114,35 @@ namespace InterativeErosionProject
 
         ///<summary> Contains all 4 layers in ARGB</summary>
         public RenderTexture[] m_terrainField;
-        
+
         ///<summary>sediment transport capacity? How much sediment water can hold?</summary>        
-        private RenderTexture[] m_advectSediment;
+        public RenderTexture[] m_advectSediment;
 
         ///<summary> Contains sediment amount. What is sediment? Actual amount of sediment in water?</summary>
-        private RenderTexture[] m_sedimentField;
+        public RenderTexture[] m_sedimentField;
 
         ///<summary> Contains regolith amount.Regolith is quasi-liquid at the bottom of water flow</summary>
-        private RenderTexture[] m_regolithField;
+        public RenderTexture[] m_regolithField;
 
         ///<summary> Moved regolith amount?</summary>
-        private RenderTexture[] m_regolithOutFlow;
+        public RenderTexture[] m_regolithOutFlow;
 
         ///<summary> Contains water amount.</summary>
-        private RenderTexture[] m_waterField;
+        public RenderTexture[] m_waterField;
 
         ///<summary> Moved water amount?</summary>
-        private RenderTexture[] m_waterOutFlow;
+        public RenderTexture[] m_waterOutFlow;
 
         ///<summary> Water speed (1 channel)</summary>
         public RenderTexture[] m_waterVelocity;
 
         ///<summary> Contains surface angels for each point</summary>
-        private RenderTexture m_tiltAngle;
+        public RenderTexture m_tiltAngle;
 
         ///<summary> Used for non-water erosion aka slippering of material</summary>
-        private RenderTexture m_slippageHeight;
+        public RenderTexture m_slippageHeight;
         ///<summary> Used for non-water erosion aka slippering of material. ARGB</summary>
-        private RenderTexture m_slippageOutflow;
+        public RenderTexture m_slippageOutflow;
 
 
         private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom;
@@ -164,6 +171,7 @@ namespace InterativeErosionProject
 
         public Texture2D bufferRGHalfTexture;
         public Texture2D bufferARGBFloatTexture;
+        public Texture2D bufferRFloatTexture;
         //This will allow you to set a noise style for each terrain layer
         private NOISE_STYLE[] m_layerStyle = new NOISE_STYLE[]
         {
@@ -189,14 +197,18 @@ namespace InterativeErosionProject
             Application.runInBackground = true;
 
             bufferRGHalfTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGHalf, false);
-            bufferRGHalfTexture.filterMode = FilterMode.Bilinear;
             bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
+            bufferRGHalfTexture.filterMode = FilterMode.Bilinear;
 
             bufferARGBFloatTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGBAFloat, false);
-            bufferRGHalfTexture.filterMode = FilterMode.Point;
             bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
+            bufferRGHalfTexture.filterMode = FilterMode.Point;
 
-            m_seed = Random.Range(0, int.MaxValue);
+            bufferRFloatTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGBAFloat, false);
+            bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
+            bufferRGHalfTexture.filterMode = FilterMode.Bilinear;
+
+            m_seed = UnityEngine.Random.Range(0, int.MaxValue);
 
             m_waterDamping = Mathf.Clamp01(m_waterDamping);
             m_regolithDamping = Mathf.Clamp01(m_regolithDamping);
@@ -217,7 +229,7 @@ namespace InterativeErosionProject
             m_sedimentField = new RenderTexture[2];
             m_regolithField = new RenderTexture[2];
             m_regolithOutFlow = new RenderTexture[2];
-           
+
             m_terrainField[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.ARGBFloat);
             m_terrainField[0].wrapMode = TextureWrapMode.Clamp;
             m_terrainField[0].filterMode = FilterMode.Point;
@@ -361,7 +373,7 @@ namespace InterativeErosionProject
             if (Input.GetKey(KeyCode.RightArrow)) m_waterInputPoint.x += m_waterInputSpeed * Time.deltaTime;
 
             addMaterial(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);
-            
+
             if (m_evaporationConstant > 0.0f)
             {
                 m_evaprationMat.SetFloat("_EvaporationConstant", m_evaporationConstant);
@@ -565,8 +577,7 @@ namespace InterativeErosionProject
             }
 
         }
-
-        private void Update()
+        private void Simulate()
         {
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
@@ -587,17 +598,22 @@ namespace InterativeErosionProject
             ErosionAndDeposition();
             ApplyFreeSlip(m_terrainField);
             ApplyFreeSlip(m_sedimentField);
-            AdvectSediment();
+            //AdvectSediment();
 
-            DisintegrateAndDeposit();
-            ApplyFreeSlip(m_terrainField);
-            ApplyFreeSlip(m_regolithField);
-            OutFlow(m_regolithField, m_regolithOutFlow, m_regolithDamping);
+            //DisintegrateAndDeposit();
+            //ApplyFreeSlip(m_terrainField);
+            //ApplyFreeSlip(m_regolithField);
+            //OutFlow(m_regolithField, m_regolithOutFlow, m_regolithDamping);
 
             ApplySlippage();
 
             RTUtility.SetToBilinear(m_terrainField);
             RTUtility.SetToBilinear(m_waterField);
+        }
+        private void Update()
+        {
+            if (Player.isSimulationOn())
+                Simulate();
 
             //updating meshes
             //if the size of the mesh does not match the size of the texture 
@@ -823,12 +839,17 @@ namespace InterativeErosionProject
 
         //}
 
-        public Vector4 getData4Float32bits(RenderTexture source, Point point)
+        private Vector4 getData4Float32bits(RenderTexture source, Point point)
         {
-
             bufferARGBFloatTexture = GetRTPixels(source, bufferARGBFloatTexture);
             var res = bufferARGBFloatTexture.GetPixel(point.x, point.y);
             return res;
+        }
+        private float getDataRFloat(RenderTexture source, Point point)
+        {
+            bufferRFloatTexture = GetRTPixels(source, bufferRFloatTexture);
+            var res = bufferRFloatTexture.GetPixel(point.x, point.y);
+            return res.r;
         }
         /// <summary>
         /// Not supported
@@ -860,12 +881,25 @@ namespace InterativeErosionProject
         {
             //addMaterial()
         }
-        public void addWater( Vector2 point, float radius, float amount)
+        public void addWater(Vector2 point, float radius, float amount)
         {
             addMaterial(m_waterField, point, radius, amount);
         }
+        public float getTerrainLevel(Point point)
+        {
+            var vector4 = getData4Float32bits(m_terrainField[WRITE], point);
+            return vector4.x + vector4.y + vector4.z + vector4.w;
+        }
+        public Vector4 getTerrainLayers(Point point)
+        {
+            return getData4Float32bits(m_terrainField[WRITE], point);
+        }
+        internal float getSandInWater(Point selectedPoint)
+        {
+            return getDataRFloat(m_sedimentField[WRITE], selectedPoint);
+        }
         private void addMaterial(RenderTexture[] where, Vector2 point, float radius, float amount)
-        {   
+        {
             if (amount != 0f)
             {
                 m_waterInputMat.SetVector("_Point", point);
@@ -874,7 +908,7 @@ namespace InterativeErosionProject
 
                 Graphics.Blit(where[READ], where[WRITE], m_waterInputMat);
                 RTUtility.Swap(where);
-            }           
+            }
         }
     }
 
