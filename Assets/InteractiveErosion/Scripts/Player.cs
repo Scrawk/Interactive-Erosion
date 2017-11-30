@@ -53,17 +53,6 @@ namespace InterativeErosionProject
         {
             return list[value];
         }
-    }
-    public class Player : MonoBehaviour
-    {
-        
-
-        void Update()
-        {
-            
-        }
-        
-        
-    }
+    }    
 }
 

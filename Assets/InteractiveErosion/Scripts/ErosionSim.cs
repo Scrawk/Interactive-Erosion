@@ -1,13 +1,22 @@
-// what is difference between m_terrainField m_sedimentField m_regolithField?
 // good browni 51381BFF
 // good red 552710FF
 // add texture of rain and evaporation amount? Will give oceans? No, it wouldn't
 // add multiple water sources than?
-// add drainage
+// add drainage+
 // add text for water sources?
 // add oceans
+// tilt angel breaks erosion? - min title did
+// add lava
+// remove water light absorption?
+// add stone - cobblestone conversion?
+// add layers of material on init?
+
 // add erosion limit
-// tilt angel influence on erosion breaks simulation? - min title did
+// check deltas
+// check river formation
+// check meanders
+// output shader
+// check regolith
 
 
 using UnityEngine;
@@ -51,45 +60,60 @@ namespace InterativeErosionProject
 
         private int m_seed = 0;
 
+        //The number of layers used in the simulation. Must be 1, 2, 3 or, 4
+        private const int TERRAIN_LAYERS = 4;
+
+
+        //This will allow you to set a noise style for each terrain layer
+        private NOISE_STYLE[] m_layerStyle = new NOISE_STYLE[]
+        {
+            NOISE_STYLE.TURBULENCE,
+            NOISE_STYLE.FRACTAL,
+            NOISE_STYLE.FRACTAL,
+            NOISE_STYLE.FRACTAL
+        };
+
         //Noise settings. Each Component of vector is the setting for a layer
         //ie x is setting for layer 0, y is setting for layer 1 etc
 
-        private Vector4 m_octaves = new Vector4(8, 8, 8, 8); //Higher octaves give more finer detail
-        private Vector4 m_frequency = new Vector4(2f, 3.0f, 4.0f, 4.0f); //A lower value gives larger scale details
-        private Vector4 m_lacunarity = new Vector4(2.0f, 3.0f, 3.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
-        private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of chage of the noise frequency
+        private Vector4 m_octaves = new Vector4(8, 6, 4, 8); //Higher octaves give more finer detail
+        private Vector4 m_frequency = new Vector4(4f, 2f, 2f, 2f); //A lower value gives larger scale details
+        private Vector4 m_lacunarity = new Vector4(2.5f, 2.3f, 2.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
+        private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of change of the noise frequency
 
         //private Vector4 m_amp = new Vector4(2f, 2f, 0.5f, 0.5f); //Amount of terrain in a layer
-        static private float terrainAmountScale = 0.1f;
-        private Vector4 m_amp = new Vector4(6.0f * terrainAmountScale, 3f * terrainAmountScale, 6f * terrainAmountScale, 1f * terrainAmountScale); //Amount of terrain in a layer        
+        static private float terrainAmountScale = 0.3f;
+        //private Vector4 m_amp = new Vector4(6.0f * terrainAmountScale, 3f * terrainAmountScale, 6f * terrainAmountScale, 0.15f * terrainAmountScale); //Amount of terrain in a layer        
+        private Vector4 m_amp = new Vector4(2f * terrainAmountScale, 1f * terrainAmountScale, 2f * terrainAmountScale, 1f * terrainAmountScale); //Amount of terrain in a layer        
 
 
         //private Vector4 m_amp = new Vector4(0f, 0f, 0f, 2f); //Amount of terrain in a layer
         private Vector4 m_offset = new Vector4(0.0f, 10.0f, 20.0f, 30.0f);
 
 
-        //The number of layers used in the simulation. Must be 1, 2, 3 or, 4
-        private const int TERRAIN_LAYERS = 4;
+
+
         /// <summary>
         /// The settings for the erosion. If the value is a vector4 each component is for a layer
         /// How easily the layer dissolves
         /// </summary>
-
-
-        public Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.0015f, 0.003f, 0.0035f);// rain
+        public Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.008f, 0.012f);// rain
         //private Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.015f, 0.8f, 1.2f);// stream
         //private Vector4 m_dissolvingConstant = new Vector4(0.0001f, 0.001f, 0.01f, 0.1f);
+
         /// <summary>
         /// The angle that slippage will occur
         /// </summary>        
         //private Vector4 m_talusAngle = new Vector4(80f, 35f, 60f, 10f); looked good
         public Vector4 m_talusAngle = new Vector4(80f, 45f, 60f, 20f);
+
         /// <summary>
         /// A higher value will increase erosion on flat areas
         /// Used as limit for surface tilt
         /// Meaning that even flat area will erode as slightly tilted area
         /// </summary>
         public float m_minTiltAngle = 5f;//0.1f;
+
         /// <summary>
         /// How much sediment the water can carry per 1 unit of water
         /// </summary>
@@ -97,6 +121,9 @@ namespace InterativeErosionProject
 
         /// <summary> Rate the sediment is deposited on top layer </summary>
         public float m_depositionConstant = 0.015f;
+
+        /// <summary> Terrain wouldn't dissolve if water level in cell is lower than this</summary>
+        public float dissolveLimit = 0.001f;
 
         /// <summary>
         /// Evaporation rate of water
@@ -184,14 +211,7 @@ namespace InterativeErosionProject
         public Texture2D bufferRGHalfTexture;
         public Texture2D bufferARGBFloatTexture;
         public Texture2D bufferRFloatTexture;
-        //This will allow you to set a noise style for each terrain layer
-        private NOISE_STYLE[] m_layerStyle = new NOISE_STYLE[]
-        {
-            NOISE_STYLE.FRACTAL,
-            NOISE_STYLE.FRACTAL,
-            NOISE_STYLE.FRACTAL,
-            NOISE_STYLE.FRACTAL
-        };
+
 
         //This will take the abs value of the final noise is set to true
         //This will make the fractal or warped noise look different.
@@ -371,7 +391,7 @@ namespace InterativeErosionProject
         }
 
         /// <summary>
-        /// Moves field material to slip in all 4 directions
+        /// Copies data from edge-1 coordinates (by 4 sides) to edge of texture
         /// </summary>        
         private void ApplyFreeSlip(RenderTexture[] field)
         {
@@ -429,7 +449,6 @@ namespace InterativeErosionProject
         ///  Transfers m_terrainField to m_sedimentField basing on
         ///  m_waterVelocity, m_sedimentCapacity, m_dissolvingConstant,
         ///  m_depositionConstant, m_tiltAngle, m_minTiltAngle
-
         /// Also calculates m_tiltAngle
         /// </summary>
         private void ErosionAndDeposition()
@@ -443,12 +462,14 @@ namespace InterativeErosionProject
             m_erosionAndDepositionMat.SetTexture("_TerrainField", m_terrainField[READ]);
             m_erosionAndDepositionMat.SetTexture("_SedimentField", m_sedimentField[READ]);
             m_erosionAndDepositionMat.SetTexture("_VelocityField", m_waterVelocity[READ]);
+            m_erosionAndDepositionMat.SetTexture("_WaterField", m_waterField[READ]);
             m_erosionAndDepositionMat.SetTexture("_TiltAngle", m_tiltAngle);
             m_erosionAndDepositionMat.SetFloat("_MinTiltAngle", m_minTiltAngle);
             m_erosionAndDepositionMat.SetFloat("_SedimentCapacity", m_sedimentCapacity);
             m_erosionAndDepositionMat.SetVector("_DissolvingConstant", m_dissolvingConstant);
             m_erosionAndDepositionMat.SetFloat("_DepositionConstant", m_depositionConstant);
             m_erosionAndDepositionMat.SetFloat("_Layers", (float)TERRAIN_LAYERS);
+            m_erosionAndDepositionMat.SetFloat("_DissolveLimit", dissolveLimit); //nash added it            
 
             RenderTexture[] terrainAndSediment = new RenderTexture[2] { m_terrainField[WRITE], m_sedimentField[WRITE] };
 
@@ -585,11 +606,11 @@ namespace InterativeErosionProject
                 ApplyFreeSlip(m_regolithField);
 
                 WaterEvaporate();
-                
 
                 OutFlow(m_waterField, m_waterOutFlow, m_waterDamping);
                 WaterVelocity();
             }
+
 
             if (simulateWaterErosion)
             {
@@ -899,16 +920,24 @@ namespace InterativeErosionProject
 
         public float getTerrainLevel(Point point)
         {
-            var vector4 = getData4Float32bits(m_terrainField[WRITE], point);
+            var vector4 = getData4Float32bits(m_terrainField[READ], point);
             return vector4.x + vector4.y + vector4.z + vector4.w;
         }
         public Vector4 getTerrainLayers(Point point)
         {
-            return getData4Float32bits(m_terrainField[WRITE], point);
+            return getData4Float32bits(m_terrainField[READ], point);
         }
         internal float getSandInWater(Point selectedPoint)
         {
-            return getDataRFloat(m_sedimentField[WRITE], selectedPoint);
+            return getDataRFloat(m_sedimentField[READ], selectedPoint);
+        }
+        internal float getWaterLevel(Point selectedPoint)
+        {
+            return getDataRFloat(m_waterField[READ], selectedPoint);
+        }
+        internal Vector4 getWaterVelocity(Point selectedPoint)
+        {
+            return getData4Float32bits(m_waterVelocity[READ], selectedPoint);
         }
         private void addMaterial(RenderTexture[] where, Vector2 point, float radius, float amount)
         {
@@ -931,7 +960,7 @@ namespace InterativeErosionProject
         public void SetWaterVisability(bool value)
         {
             if (value)
-                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 400f));
+                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 1000f));
             else
                 m_waterMat.SetVector("_WaterAbsorption", new Vector4(0f, 0f, 0f, 0f));
         }
