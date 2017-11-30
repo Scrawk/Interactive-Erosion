@@ -3,8 +3,12 @@
 // good red 552710FF
 // add texture of rain and evaporation amount? Will give oceans? No, it wouldn't
 // add multiple water sources than?
-// tilt angel influence on erosion breaks simulation? - min title did
 // add drainage
+// add text for water sources?
+// add oceans
+// add erosion limit
+// tilt angel influence on erosion breaks simulation? - min title did
+
 
 using UnityEngine;
 using System.Collections;
@@ -38,8 +42,12 @@ namespace InterativeErosionProject
         /// <summary> Movement speed of point of water source</summary>
         //private float m_waterInputSpeed = 0.01f;
         private Vector2 m_waterInputPoint = new Vector2(-1f, 1f);
-        private float m_waterInputAmount = 2.0f;
+        private float m_waterInputAmount = 0f;
         private float m_waterInputRadius = 0.008f;
+
+        private Vector2 waterDrainagePoint = new Vector2(-1f, 1f);
+        private float waterDrainageAmount = 0f;
+        private float waterDrainageRadius = 0.008f;
 
         private int m_seed = 0;
 
@@ -97,7 +105,7 @@ namespace InterativeErosionProject
 
         /// <summary> Movement speed of point of water source</summary>
         public float m_rainInputAmount = 0.001f;
-        
+
 
         /// <summary>
         /// Viscosity of regolith
@@ -353,7 +361,6 @@ namespace InterativeErosionProject
         /// </summary>
         private void WaterEvaporate()
         {
-
             if (m_evaporationConstant > 0.0f)
             {
                 m_evaprationMat.SetFloat("_EvaporationConstant", m_evaporationConstant);
@@ -569,6 +576,8 @@ namespace InterativeErosionProject
                 ////WaterEvaporate();
                 if (m_waterInputAmount > 0f)
                     addMaterial(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);// WaterInput();
+                if (waterDrainageAmount > 0f)
+                    addMaterial(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f);
 
                 ApplyFreeSlip(m_terrainField);
                 ApplyFreeSlip(m_sedimentField);
@@ -576,6 +585,8 @@ namespace InterativeErosionProject
                 ApplyFreeSlip(m_regolithField);
 
                 WaterEvaporate();
+                
+
                 OutFlow(m_waterField, m_waterOutFlow, m_waterDamping);
                 WaterVelocity();
             }
@@ -951,6 +962,20 @@ namespace InterativeErosionProject
                 m_waterInputPoint.y = selectedPoint.y / (float)TEX_SIZE;
                 m_waterInputRadius = brushSize;
                 m_waterInputAmount = brushPower;
+            }
+        }
+        internal void MoveWaterDrainage(Point selectedPoint)
+        {
+            if (selectedPoint == null)
+            {
+                waterDrainageAmount = 0f;
+            }
+            else
+            {
+                waterDrainagePoint.x = selectedPoint.x / (float)TEX_SIZE;
+                waterDrainagePoint.y = selectedPoint.y / (float)TEX_SIZE;
+                waterDrainageRadius = brushSize;
+                waterDrainageAmount = brushPower;
             }
         }
         private float brushSize = 0.001f;

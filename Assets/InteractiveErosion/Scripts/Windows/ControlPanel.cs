@@ -69,6 +69,8 @@ namespace InterativeErosionProject
                                 sim.AddWater(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.watersource)
                                 sim.MoveWaterSource(selectedPoint);
+                            else if (selectedMaterial == MaterialsForEditing.waterdrain)
+                                sim.MoveWaterDrainage(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.stone)
                                 sim.AddToTerrainLayer(1, selectedPoint);
                         }
@@ -78,6 +80,8 @@ namespace InterativeErosionProject
                                 sim.RemoveWater(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.watersource)
                                 sim.MoveWaterSource(null);
+                            else if (selectedMaterial == MaterialsForEditing.waterdrain)
+                                sim.MoveWaterDrainage(null);
                             else if (selectedMaterial == MaterialsForEditing.stone)
                                 sim.RemoveFromTerrainLayer(1, selectedPoint);
                         }
