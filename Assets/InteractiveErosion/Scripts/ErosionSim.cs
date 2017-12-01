@@ -10,13 +10,17 @@
 // remove water light absorption?
 // add stone - cobblestone conversion?
 // add layers of material on init?
+// InteractiveErosion class
 
-// add erosion limit
-// check deltas
-// check river formation
+// add erosion limit +
+// check deltas 
+// check river formation +
 // check meanders
 // output shader
 // check regolith
+// doesn't draw all map?
+// wider output for oceans
+// update water drains to drain sand
 
 
 using UnityEngine;
@@ -24,6 +28,7 @@ using System.Collections;
 
 using ImprovedPerlinNoiseProject;
 using System;
+using System.Collections.Generic;
 
 namespace InterativeErosionProject
 {
@@ -46,6 +51,7 @@ namespace InterativeErosionProject
         public Material m_erosionAndDepositionMat, m_advectSedimentMat;
         public Material m_slippageHeightMat, m_slippageOutflowMat, m_slippageUpdateMat;
         public Material m_disintegrateAndDepositMat, m_applyFreeSlipMat;
+        public Material setFloatValueMat, changeValueMat, getValueMat;
 
 
         /// <summary> Movement speed of point of water source</summary>
@@ -148,6 +154,11 @@ namespace InterativeErosionProject
         /// </summary>
         public float m_maxRegolith = 0.008f;
 
+        public float oceanDestroySedimentsLevel = 0f;
+        public float oceanDepth = 4f;
+        public float oceanWaterLevel = 20f;
+        public float oceanWidth = 83f;
+
         ///<summary> Meshes</summary>
         private GameObject[] m_gridLand, m_gridWater;
 
@@ -208,10 +219,6 @@ namespace InterativeErosionProject
         private const int READ = 0;
         private const int WRITE = 1;
 
-        public Texture2D bufferRGHalfTexture;
-        public Texture2D bufferARGBFloatTexture;
-        public Texture2D bufferRFloatTexture;
-
 
         //This will take the abs value of the final noise is set to true
         //This will make the fractal or warped noise look different.
@@ -223,6 +230,12 @@ namespace InterativeErosionProject
             false,
             false
         };
+        public Texture2D bufferRGHalfTexture;
+        public Texture2D bufferARGBFloatTexture;
+        public Texture2D bufferRFloatTexture;
+
+        //private readonly
+        public List<WorldSides> oceans = new List<WorldSides>();
 
         private void Start()
         {
@@ -248,10 +261,13 @@ namespace InterativeErosionProject
             float u = 1.0f / (float)TEX_SIZE;
 
             m_rectLeft = new Rect(0.0f, 0.0f, u, 1.0f);
-            m_rectRight = new Rect(1.0f - u, 0.0f, u, 1.0f);
+            m_rectRight = new Rect(1.0f - u, 0.0f, -u, 1.0f);
+            //m_rectRight = new Rect(1.0f - u, 0.0f, 1.0f, 1.0f);
 
             m_rectBottom = new Rect(0.0f, 0.0f, 1.0f, u);
-            m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, u);
+
+            m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, -u);
+            //m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, 1.0f);
 
             m_terrainField = new RenderTexture[2];
             m_waterOutFlow = new RenderTexture[2];
@@ -355,6 +371,32 @@ namespace InterativeErosionProject
             InitMaps();
 
         }
+        private void SetValue(RenderTexture[] field, Vector4 value, Rect rect)
+        {
+            Graphics.Blit(field[READ], field[WRITE]);
+            setFloatValueMat.SetVector("_Value", value);
+            RTUtility.Blit(field[READ], field[WRITE], setFloatValueMat, rect, 0, false);
+            RTUtility.Swap(field);
+        }
+        private void ChangeValue(RenderTexture[] where, Vector2 point, float radius, float amount)
+        {
+            if (amount != 0f)
+            {
+                m_waterInputMat.SetVector("_Point", point);
+                m_waterInputMat.SetFloat("_Radius", radius);
+                m_waterInputMat.SetFloat("_Amount", amount);
+
+                Graphics.Blit(where[READ], where[WRITE], m_waterInputMat);
+                RTUtility.Swap(where);
+            }
+        }
+        private void ChangeValue(RenderTexture[] field, Vector4 value, Rect rect)
+        {
+            Graphics.Blit(field[READ], field[WRITE]);
+            changeValueMat.SetVector("_Value", value);
+            RTUtility.Blit(field[READ], field[WRITE], changeValueMat, rect, 0, false);
+            RTUtility.Swap(field);
+        }
         /// <summary>
         /// Adds water everywhere 
         /// </summary>
@@ -418,6 +460,7 @@ namespace InterativeErosionProject
 
             RTUtility.Swap(field);
         }
+
         /// <summary>
         ///  Calculates flow of field
         /// </summary>
@@ -596,21 +639,28 @@ namespace InterativeErosionProject
                 RainInput();
                 ////WaterEvaporate();
                 if (m_waterInputAmount > 0f)
-                    addMaterial(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);// WaterInput();
+                    ChangeValue(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);// WaterInput();
                 if (waterDrainageAmount > 0f)
-                    addMaterial(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f);
+                    ChangeValue(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f);
+                WaterEvaporate();
 
+                // set specified levels of water and terrain at oceans
+                foreach (var item in oceans)
+                {
+                    Rect rect = getPartOfMap(item, 2f);
+                    //item.Value.waterLevel
+                    SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
+                    SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
+                }
                 ApplyFreeSlip(m_terrainField);
                 ApplyFreeSlip(m_sedimentField);
                 ApplyFreeSlip(m_waterField);
                 ApplyFreeSlip(m_regolithField);
 
-                WaterEvaporate();
 
                 OutFlow(m_waterField, m_waterOutFlow, m_waterDamping);
                 WaterVelocity();
             }
-
 
             if (simulateWaterErosion)
             {
@@ -900,84 +950,22 @@ namespace InterativeErosionProject
             RenderTexture.active = currentActiveRT;
             return destination;
         }
+
         public void AddToTerrainLayer(int layer, Point point)
         {
-            addMaterial(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower);
+            ChangeValue(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower);
         }
         public void RemoveFromTerrainLayer(int layer, Point point)
         {
-            addMaterial(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
+            ChangeValue(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
         }
         public void AddWater(Point point)
         {
-            addMaterial(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower);
+            ChangeValue(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower);
         }
         public void RemoveWater(Point point)
         {
-            addMaterial(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
-        }
-
-
-        public float getTerrainLevel(Point point)
-        {
-            var vector4 = getData4Float32bits(m_terrainField[READ], point);
-            return vector4.x + vector4.y + vector4.z + vector4.w;
-        }
-        public Vector4 getTerrainLayers(Point point)
-        {
-            return getData4Float32bits(m_terrainField[READ], point);
-        }
-        internal float getSandInWater(Point selectedPoint)
-        {
-            return getDataRFloat(m_sedimentField[READ], selectedPoint);
-        }
-        internal float getWaterLevel(Point selectedPoint)
-        {
-            return getDataRFloat(m_waterField[READ], selectedPoint);
-        }
-        internal Vector4 getWaterVelocity(Point selectedPoint)
-        {
-            return getData4Float32bits(m_waterVelocity[READ], selectedPoint);
-        }
-        private void addMaterial(RenderTexture[] where, Vector2 point, float radius, float amount)
-        {
-            if (amount != 0f)
-            {
-                m_waterInputMat.SetVector("_Point", point);
-                m_waterInputMat.SetFloat("_Radius", radius);
-                m_waterInputMat.SetFloat("_Amount", amount);
-
-                Graphics.Blit(where[READ], where[WRITE], m_waterInputMat);
-                RTUtility.Swap(where);
-            }
-        }
-        private bool simulateWaterFlow = false;
-        public void SetSimulateWater(bool value)
-        {
-            simulateWaterFlow = value;
-        }
-
-        public void SetWaterVisability(bool value)
-        {
-            if (value)
-                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 1000f));
-            else
-                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0f, 0f, 0f, 0f));
-        }
-        private bool simulateRigolith;
-        public void SetSimulateRegolith(bool value)
-        {
-            simulateRigolith = value;
-        }
-        private bool simulateSlippage;
-        public void SetSimulateSlippage(bool value)
-        {
-            simulateSlippage = value;
-        }
-        private bool simulateWaterErosion;
-        public void SetSimulateWaterErosion(bool value)
-        {
-            simulateWaterErosion = value;
+            ChangeValue(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
         }
         internal void MoveWaterSource(Point selectedPoint)
         {
@@ -1007,6 +995,136 @@ namespace InterativeErosionProject
                 waterDrainageAmount = brushPower;
             }
         }
+
+        /// <summary>
+        /// returns which side of map is closer to point - north, south, etc
+        /// </summary>
+        private WorldSides getSideOfWorld(Point point)
+        {
+            // find to which border it's closer 
+            WorldSides side = default(WorldSides);
+            int distToNorth = Math.Abs(0 - point.x);
+            int distToSouth = Math.Abs(MAX_TEX_INDEX - point.x);
+            int distToWest = Math.Abs(0 - point.y);
+            int distToEast = Math.Abs(MAX_TEX_INDEX - point.y);
+
+            if (distToEast == Math.Min(Math.Min(Math.Min(distToWest, distToEast), distToNorth), distToSouth))
+                side = WorldSides.North;
+            else if (distToWest == Math.Min(Math.Min(Math.Min(distToWest, distToEast), distToNorth), distToSouth))
+                side = WorldSides.South;
+            else if (distToSouth == Math.Min(Math.Min(Math.Min(distToWest, distToEast), distToNorth), distToSouth))
+                side = WorldSides.East;
+            else if (distToNorth == Math.Min(Math.Min(Math.Min(distToWest, distToEast), distToNorth), distToSouth))
+                side = WorldSides.West;
+
+            return side;
+        }
+        /// <summary>
+        /// get rect-part of world texture according to world side
+        /// </summary>
+        private Rect getPartOfMap(WorldSides side, float width)
+        {
+            Rect rect = default(Rect);
+            if (side == WorldSides.North)
+            {
+                // failed here
+                rect = m_rectTop;
+                rect.height *= width;// *-1f;                
+            }
+            else if (side == WorldSides.South)
+            {
+                rect = m_rectBottom;
+                rect.height *= width;
+            }
+            else if (side == WorldSides.East)
+            {
+                rect = m_rectRight;
+                rect.width *= width;
+            }
+            else if (side == WorldSides.West)
+            {
+                rect = m_rectLeft;
+                rect.width *= width;// * -1f;
+            }
+            return rect;
+        }
+        public void AddOcean(Point point)
+        {
+            var side = getSideOfWorld(point);
+            if (!oceans.Contains(side))
+            {
+                oceans.Add(side);
+                //oceans = oceans & side;
+                // clear ocean bottom
+                ChangeValue(m_terrainField, new Vector4(oceanDepth * -1f, 0f, 0f, 0f), getPartOfMap(side, oceanWidth));
+            }
+        }
+        public void RemoveOcean(Point point)
+        {
+            var side = getSideOfWorld(point);
+            if (oceans.Contains(side))
+            {
+                oceans.Remove(side);
+                ChangeValue(m_terrainField, new Vector4(oceanDepth, 0f, 0f, 0f), getPartOfMap(side, oceanWidth));
+            }
+        }
+        public float getTerrainLevel(Point point)
+        {
+            var vector4 = getData4Float32bits(m_terrainField[READ], point);
+            return vector4.x + vector4.y + vector4.z + vector4.w;
+        }
+        public Vector4 getTerrainLayers(Point point)
+        {
+            return getData4Float32bits(m_terrainField[READ], point);
+        }
+        internal float getSandInWater(Point selectedPoint)
+        {
+            return getDataRFloat(m_sedimentField[READ], selectedPoint);
+        }
+        internal Vector4 getWaterLevel(Point selectedPoint)
+        {
+            return getData4Float32bits(m_waterField[READ], selectedPoint);
+
+            //getValueMat.SetVector("_Coords", selectedPoint.getVector2(TEX_SIZE));            
+            //Graphics.Blit(m_waterField[READ], null, getValueMat);
+            ////RTUtility.Swap(m_waterField);            
+
+            //return getValueMat.GetColor("_Output");
+        }
+        internal Vector4 getWaterVelocity(Point selectedPoint)
+        {
+            return getData4Float32bits(m_waterVelocity[READ], selectedPoint);
+        }
+
+        private bool simulateWaterFlow = false;
+        public void SetSimulateWater(bool value)
+        {
+            simulateWaterFlow = value;
+        }
+
+        public void SetWaterVisability(bool value)
+        {
+            if (value)
+                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 1000f));
+            else
+                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0f, 0f, 0f, 0f));
+        }
+        private bool simulateRigolith;
+        public void SetSimulateRegolith(bool value)
+        {
+            simulateRigolith = value;
+        }
+        private bool simulateSlippage;
+        public void SetSimulateSlippage(bool value)
+        {
+            simulateSlippage = value;
+        }
+        private bool simulateWaterErosion;
+        public void SetSimulateWaterErosion(bool value)
+        {
+            simulateWaterErosion = value;
+        }
+
         private float brushSize = 0.001f;
         public void SetBrushSize(float value)
         {

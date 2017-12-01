@@ -6,6 +6,19 @@ using UnityEngine;
 
 namespace InterativeErosionProject
 {
+    //public struct Ocean
+    //{
+    //    public float waterLevel, terrainLevel;        
+    //    public Ocean(float waterLevel, float terrainLevel)
+    //    {
+    //        this.waterLevel = waterLevel;
+    //        this.terrainLevel = terrainLevel;            
+    //    }
+    //}
+    public enum WorldSides
+    {
+        None = 0, West = 1, North=2 , East= 4, South =8
+    }
     public class Point
     {
         public int x, y;

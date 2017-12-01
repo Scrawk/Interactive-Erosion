@@ -20,7 +20,7 @@ Shader "Erosion/ErosionAndDeposition"
 			#pragma vertex vert
 			#pragma fragment frag
 
-			uniform float _MinTiltAngle, _SedimentCapacity, _DepositionConstant, _Layers, _ErosionLimit;
+			uniform float _MinTiltAngle, _SedimentCapacity, _DepositionConstant, _Layers, _DissolveLimit;
 			uniform float4 _DissolvingConstant;
 			uniform sampler2D _TiltAngle, _TerrainField, _VelocityField, _SedimentField, _WaterField;
 
