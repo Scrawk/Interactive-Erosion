@@ -2,6 +2,7 @@
 // add oceans +
 // add erosion limit +
 // check river formation +
+// rename shaders +
 
 // good browni 51381BFF
 // good red 552710FF
@@ -23,10 +24,11 @@
 // try grainy map
 // check regolith
 
+// visualize sedimentfield in water shader?
+
 // add water velocity visualization
 // update water drains to drain sand
 // doesn't draw all map?
-// rename shaders
 // simplify model
 
 

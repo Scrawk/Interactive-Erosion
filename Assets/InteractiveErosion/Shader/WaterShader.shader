@@ -117,9 +117,12 @@ Shader "Erosion/WaterShader"
 			o.Alpha = 1.0;
 			o.Normal = N;
 			
-			//o.Albedo = tex2D(_SedimentField, IN.uv_MainTex).xxx;
+			float sed = tex2D(_SedimentField, IN.uv_MainTex);
+			o.Albedo.x += sed;
+			//o.Albedo.y += sed;
 			
-			//o.Albedo = length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.1;
+			//o.Albedo += length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.1;
+			o.Albedo += length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.03;
 			
 			
 		}
