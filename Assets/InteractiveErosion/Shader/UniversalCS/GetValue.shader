@@ -3,7 +3,7 @@ Shader "Erosion/GetValue"
 {
 	Properties
 	{
-		_Output("Output", Float) = 1.1
+		_Output("Output", Vector) = (0,0,0,1)
 	}
 		SubShader
 	{
@@ -19,7 +19,7 @@ Shader "Erosion/GetValue"
 			#pragma fragment frag
 
 			uniform sampler2D _InputTexture;
-			uniform float4 _Output;
+			extern float4 _Output;
 			uniform float2 _Coords;
 
 			struct v2f
@@ -44,17 +44,11 @@ Shader "Erosion/GetValue"
 
 			float4 frag(v2f IN) : COLOR
 			{
-				//float velocity = length(tex2D(_VelocityField, IN.uv).xy);
-
-				/*f2a OUT;
-
-				OUT.col0 = velocity;
-
-				return OUT;*/
-				//if (IN.uv == _Coords)
 				if (IN.uv.x == _Coords.x && IN.uv.y == _Coords.y)
-					_Output = tex2D(_InputTexture, IN.uv).xyzw;
-				return  tex2D(_InputTexture, IN.uv);
+					_Output = tex2D(_InputTexture, IN.uv);
+				else
+					_Output = float4(-1, -1, -1, -1);
+				return tex2D(_InputTexture, IN.uv);
 			}
 
 			ENDCG

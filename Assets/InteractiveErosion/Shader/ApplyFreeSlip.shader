@@ -1,4 +1,4 @@
-
+//actually copies data from edge-1 to edge, clearing some noise
 Shader "Erosion/ApplyFreeSlip" 
 {
 	//UNITY_SHADER_NO_UPGRADE

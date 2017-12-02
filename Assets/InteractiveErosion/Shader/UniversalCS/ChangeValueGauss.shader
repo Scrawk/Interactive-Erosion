@@ -48,6 +48,7 @@ Shader "Erosion/WaterInput"
 				
 				float waterAmount = gauss * _Amount;
 				
+				//check if it can get water to negative
 				return tex2D(_MainTex, IN.uv) + float4(waterAmount,0,0,0);
 			}
 			
