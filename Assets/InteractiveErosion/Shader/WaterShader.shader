@@ -9,6 +9,7 @@ Shader "Erosion/WaterShader"
 		_FresnelFactor("FresnelFactor", Float) = 4.0
 		_MinWaterHt("MinWaterHt", Float) = 1.0
 		_SunSpecStr("SunSpecStr", Float) = 0.4
+	    _SedimentColor("SedimentColor", Vector) = (0.192, 0.596, 1.0 , 1.0)
 	}
 	SubShader 
 	{
@@ -29,7 +30,7 @@ Shader "Erosion/WaterShader"
 		
 		uniform sampler2D _WaterField, _SedimentField, _VelocityField;
 		uniform float _ScaleY, _TexSize, _Layers;
-		uniform float3 _SunDir;
+		uniform float3 _SunDir, _SedimentColor;
 		
 		struct Input 
 		{
@@ -109,21 +110,23 @@ Shader "Erosion/WaterShader"
 			
 			float waterDepth = clamp(depth - fragmentsDepth, 0.0, 1.0);
 
-			float3 AbsorptonCof = _WaterAbsorption.rgb * waterDepth * _WaterAbsorption.a;
+			float sediment = tex2D(_SedimentField, IN.uv_MainTex);
+
 			
+
+			float3 AbsorptonCof =( _WaterAbsorption.rgb + _SedimentColor.rgb*sediment ) * waterDepth * _WaterAbsorption.a;
+						
+
 			float3 col = grab * exp(-AbsorptonCof*AbsorptonCof);
 			
+			
 			o.Albedo = lerp(col, _SkyColor.rgb, fresnel*0.4) + Sun(V,N) * _SunSpecStr;
+			
 			o.Alpha = 1.0;
 			o.Normal = N;
 			
-			float sed = tex2D(_SedimentField, IN.uv_MainTex);
-			o.Albedo.x += sed;
-			//o.Albedo.y += sed;
-			
 			//o.Albedo += length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.1;
-			o.Albedo += length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.03;
-			
+			o.Albedo += length(tex2D(_VelocityField, IN.uv_MainTex).xy).xxx*0.03;			
 			
 		}
 		ENDCG

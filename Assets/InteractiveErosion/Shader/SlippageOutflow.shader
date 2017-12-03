@@ -40,20 +40,24 @@ Shader "Erosion/SlippageOutflow"
 			
 			float4 frag(v2f IN) : COLOR
 			{
+				// has negative texture coordinates glitch
+				// actually it doesn't glitch since it based on water outflow which is fixed
 				float u = 1.0f/_TexSize;
 				
 				float4 hts = tex2D(_TerrainField, IN.uv);
 				float ht = GetTotalHeight(hts);
-				
-				float htL = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(-u, 0)));
-				float htR = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(u, 0)));
-				float htT = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(0, u)));
-				float htB = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(0, -u)));
-				
 				float maxHt = tex2D(_MaxSlippageHeights, IN.uv).x;
+
+				float htL = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(-u, 0)));
 				float maxHtL = tex2D(_MaxSlippageHeights, IN.uv + float2(-u, 0)).x;
+
+				float htR = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(u, 0)));
 				float maxHtR = tex2D(_MaxSlippageHeights, IN.uv + float2(u, 0)).x;
+
+				float htT = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(0, u)));
 				float maxHtT = tex2D(_MaxSlippageHeights, IN.uv + float2(0, u)).x;
+
+				float htB = GetTotalHeight(tex2D(_TerrainField, IN.uv + float2(0, -u)));
 				float maxHtB = tex2D(_MaxSlippageHeights, IN.uv + float2(0, -u)).x;
 				
 				float4 dif;

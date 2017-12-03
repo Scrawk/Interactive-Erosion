@@ -30,7 +30,8 @@
 // update water drains to drain sand
 // doesn't draw all map?
 // simplify model
-
+// add actions for sediment
+// proper hide water
 
 
 using UnityEngine;
@@ -215,7 +216,7 @@ namespace InterativeErosionProject
         public RenderTexture m_slippageOutflow;
 
 
-        private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom;
+        private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom, withoutEdges;
 
         //The resolution of the textures used for the simulation. You can change this to any number
         //Does not have to be a pow2 number. You will run out of GPU memory if made to high.
@@ -251,7 +252,7 @@ namespace InterativeErosionProject
         private void Start()
         {
             Application.runInBackground = true;
-            UnityEngine.Random.Range(0, int.MaxValue);
+            m_seed = UnityEngine.Random.Range(0, int.MaxValue);
 
             bufferRGHalfTexture = new Texture2D(TEX_SIZE, TEX_SIZE, TextureFormat.RGHalf, false);
             bufferRGHalfTexture.wrapMode = TextureWrapMode.Clamp;
@@ -271,13 +272,17 @@ namespace InterativeErosionProject
             float u = 1.0f / (float)TEX_SIZE;
 
             m_rectLeft = new Rect(0.0f, 0.0f, u, 1.0f);
+            //m_rectRight = new Rect(1.0f - u, 0.0f, u, 1.0f);
             m_rectRight = new Rect(1.0f - u, 0.0f, -u, 1.0f);
-            //m_rectRight = new Rect(1.0f - u, 0.0f, 1.0f, 1.0f);
+
 
             m_rectBottom = new Rect(0.0f, 0.0f, 1.0f, u);
-
+            //m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, u);
             m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, -u);
-            //m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, 1.0f);
+
+
+            withoutEdges = new Rect(0.0f + u, 0.0f + u, 1.0f - u, 1.0f - u);
+
 
             m_terrainField = new RenderTexture[2];
             m_waterOutFlow = new RenderTexture[2];
@@ -442,38 +447,11 @@ namespace InterativeErosionProject
 
         }
 
-        /// <summary>
-        /// Copies data from edge-1 coordinates (by 4 sides) to edge of texture
-        /// </summary>        
-        private void ApplyFreeSlip(RenderTexture[] field)
-        {
-            float u = 1.0f / (float)TEX_SIZE;
-            Vector2 offset;
-
-            Graphics.Blit(field[READ], field[WRITE]);
-
-            offset = new Vector2(u, 0.0f);
-            m_applyFreeSlipMat.SetVector("_Offset", offset);
-            RTUtility.Blit(field[READ], field[WRITE], m_applyFreeSlipMat, m_rectLeft, 0, false);
-
-            offset = new Vector2(0.0f, u);
-            m_applyFreeSlipMat.SetVector("_Offset", offset);
-            RTUtility.Blit(field[READ], field[WRITE], m_applyFreeSlipMat, m_rectBottom, 0, false);
-
-            offset = new Vector2(-u, 0.0f);
-            m_applyFreeSlipMat.SetVector("_Offset", offset);
-            RTUtility.Blit(field[READ], field[WRITE], m_applyFreeSlipMat, m_rectRight, 0, false);
-
-            offset = new Vector2(0.0f, -u);
-            m_applyFreeSlipMat.SetVector("_Offset", offset);
-            RTUtility.Blit(field[READ], field[WRITE], m_applyFreeSlipMat, m_rectTop, 0, false);
-
-            RTUtility.Swap(field);
-        }
+       
 
         /// <summary>
         ///  Calculates flow of field        
-        
+
         /// </summary>
         private void FlowLiquid(RenderTexture[] liquidField, RenderTexture[] outFlow, float damping)
         {
@@ -488,6 +466,8 @@ namespace InterativeErosionProject
             m_outFlowMat.SetTexture("_Field", liquidField[READ]);
 
             Graphics.Blit(outFlow[READ], outFlow[WRITE], m_outFlowMat);
+            //RTUtility.Blit(outFlow[READ], outFlow[WRITE], m_outFlowMat, withoutEdges, 0, false);
+
             RTUtility.Swap(outFlow);
 
             m_fieldUpdateMat.SetFloat("_TexSize", (float)TEX_SIZE);
@@ -496,6 +476,7 @@ namespace InterativeErosionProject
             m_fieldUpdateMat.SetTexture("_OutFlowField", outFlow[READ]);
 
             Graphics.Blit(liquidField[READ], liquidField[WRITE], m_fieldUpdateMat);
+            //RTUtility.Blit(liquidField[READ], liquidField[WRITE], m_fieldUpdateMat, withoutEdges, 0, false);
             RTUtility.Swap(liquidField);
         }
         /// <summary>
@@ -560,7 +541,7 @@ namespace InterativeErosionProject
             m_waterVelocityMat.SetTexture("_WaterFieldOld", m_waterField[WRITE]);
             m_waterVelocityMat.SetTexture("_OutFlowField", m_waterOutFlow[READ]);
 
-            Graphics.Blit(null, m_waterVelocity[READ], m_waterVelocityMat);            
+            Graphics.Blit(null, m_waterVelocity[READ], m_waterVelocityMat);
 
             const float viscosity = 10.5f;
             const int iterations = 2;
@@ -586,7 +567,7 @@ namespace InterativeErosionProject
             m_advectSedimentMat.SetTexture("_VelocityField", m_waterVelocity[READ]);
 
             //is bug? No its no
-            Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);            
+            Graphics.Blit(m_sedimentField[READ], m_advectSediment[0], m_advectSedimentMat);
 
             m_advectSedimentMat.SetFloat("_VelocityFactor", -1.0f);
             Graphics.Blit(m_advectSediment[READ], m_advectSediment[WRITE], m_advectSedimentMat);
@@ -659,16 +640,11 @@ namespace InterativeErosionProject
                 // set specified levels of water and terrain at oceans
                 foreach (var item in oceans)
                 {
-                    Rect rect = getPartOfMap(item, 2f);
-                    //item.Value.waterLevel
+                    Rect rect = getPartOfMap(item, 1f);                   
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-                ApplyFreeSlip(m_terrainField);
-                ApplyFreeSlip(m_sedimentField);
-                ApplyFreeSlip(m_waterField);
-                ApplyFreeSlip(m_regolithField);
-
+                
 
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
@@ -677,15 +653,11 @@ namespace InterativeErosionProject
             if (simulateWaterErosion)
             {
                 ErosionAndDeposition();
-                ApplyFreeSlip(m_terrainField);
-                ApplyFreeSlip(m_sedimentField);
                 AdvectSediment();
             }
             if (simulateRigolith)
             {
-                DisintegrateAndDeposit();
-                ApplyFreeSlip(m_terrainField);
-                ApplyFreeSlip(m_regolithField);
+                DisintegrateAndDeposit();                
                 FlowLiquid(m_regolithField, m_regolithOutFlow, m_regolithDamping);
             }
             if (simulateSlippage)
@@ -717,6 +689,8 @@ namespace InterativeErosionProject
             m_waterMat.SetTexture("_MainTex", m_terrainField[READ]);
             m_waterMat.SetFloat("_Layers", (float)TERRAIN_LAYERS);
             m_waterMat.SetVector("_SunDir", m_sun.transform.forward * -1.0f);
+            m_waterMat.SetVector("_SedimentColor", new Vector4(1f - 0.808f, 1f - 0.404f, 1f - 0.00f, 1f));
+
 
         }
 
@@ -926,7 +900,7 @@ namespace InterativeErosionProject
         private Vector4 getCopy(RenderTexture source, Point point)
         {
             Graphics.CopyTexture(source, bufferARGBFloatTexture);
-                        
+
             var res = bufferARGBFloatTexture.GetPixel(point.x, point.y);
             return res;
         }
@@ -1013,7 +987,34 @@ namespace InterativeErosionProject
                 waterDrainageAmount = brushPower;
             }
         }
-
+        /// <summary>
+        /// get rect-part of world texture according to world side
+        /// </summary>
+        private Rect getPartOfMap(WorldSides side, float width)
+        {
+            Rect rect = default(Rect);
+            if (side == WorldSides.North)
+            {
+                rect = m_rectTop;
+                rect.height *= width;// *-1f;                
+            }
+            else if (side == WorldSides.South)
+            {
+                rect = m_rectBottom;
+                rect.height *= width;
+            }
+            else if (side == WorldSides.East)
+            {
+                rect = m_rectRight;
+                rect.width *= width;
+            }
+            else if (side == WorldSides.West)
+            {
+                rect = m_rectLeft;
+                rect.width *= width;// * -1f;
+            }
+            return rect;
+        }
         /// <summary>
         /// returns which side of map is closer to point - north, south, etc
         /// </summary>
@@ -1037,35 +1038,7 @@ namespace InterativeErosionProject
 
             return side;
         }
-        /// <summary>
-        /// get rect-part of world texture according to world side
-        /// </summary>
-        private Rect getPartOfMap(WorldSides side, float width)
-        {
-            Rect rect = default(Rect);
-            if (side == WorldSides.North)
-            {
-                // failed here
-                rect = m_rectTop;
-                rect.height *= width;// *-1f;                
-            }
-            else if (side == WorldSides.South)
-            {
-                rect = m_rectBottom;
-                rect.height *= width;
-            }
-            else if (side == WorldSides.East)
-            {
-                rect = m_rectRight;
-                rect.width *= width;
-            }
-            else if (side == WorldSides.West)
-            {
-                rect = m_rectLeft;
-                rect.width *= width;// * -1f;
-            }
-            return rect;
-        }
+        
         public void AddOcean(Point point)
         {
             var side = getSideOfWorld(point);
@@ -1108,7 +1081,7 @@ namespace InterativeErosionProject
             //getValueMat.SetVector("_Coords", selectedPoint.getVector2(TEX_SIZE));
             //getValueMat.SetVector("_Output",  value);
             //Graphics.Blit(m_waterField[READ], null, getValueMat);            
-                        
+
             //return getValueMat.GetVector("_Output");
         }
         internal Vector4 getWaterVelocity(Point selectedPoint)
