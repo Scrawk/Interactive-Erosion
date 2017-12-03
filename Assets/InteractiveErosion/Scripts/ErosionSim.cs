@@ -8,6 +8,7 @@
 // whole terrain editing +
 // update water drains to drain sand +
 // add actions for sediment +
+// proper hide water +
 
 // good browni 51381BFF
 // good red 552710FF
@@ -32,7 +33,6 @@
 // make WorldSides class
 
 // reanimate info window
-// proper hide water
 // doesn't draw all map?
 // output shader - make it less laggy
 
@@ -1160,9 +1160,17 @@ namespace InterativeErosionProject
         public void SetWaterVisability(bool value)
         {
             if (value)
-                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 1000f));
+                //m_waterMat.SetVector("_WaterAbsorption", new Vector4(0.259f, 0.086f, 0.113f, 1000f));
+                foreach (var item in m_gridWater)
+                {
+                    item.GetComponent<Renderer>().enabled = true;
+                }
             else
-                m_waterMat.SetVector("_WaterAbsorption", new Vector4(0f, 0f, 0f, 0f));
+                //m_waterMat.SetVector("_WaterAbsorption", new Vector4(0f, 0f, 0f, 0f));
+            foreach (var item in m_gridWater)
+            {
+                item.GetComponent<Renderer>().enabled = false;
+            }
         }
         private bool simulateRigolith;
         public void SetSimulateRegolith(bool value)
