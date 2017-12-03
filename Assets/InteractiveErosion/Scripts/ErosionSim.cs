@@ -339,11 +339,11 @@ namespace InterativeErosionProject
             m_waterOutFlow[1].filterMode = FilterMode.Point;
             m_waterOutFlow[1].name = "Water outflow 1";
 
-            m_waterVelocity[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_waterVelocity[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_waterVelocity[0].wrapMode = TextureWrapMode.Clamp;
             m_waterVelocity[0].filterMode = FilterMode.Bilinear;
             m_waterVelocity[0].name = "Water Velocity 0";
-            m_waterVelocity[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_waterVelocity[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_waterVelocity[1].wrapMode = TextureWrapMode.Clamp;
             m_waterVelocity[1].filterMode = FilterMode.Bilinear;
             m_waterVelocity[1].name = "Water Velocity 1";
@@ -375,20 +375,20 @@ namespace InterativeErosionProject
             m_regolithOutFlow[1].filterMode = FilterMode.Point;
             m_regolithOutFlow[1].name = "Regolith outflow 1";
 
-            m_sedimentField[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_sedimentField[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_sedimentField[0].wrapMode = TextureWrapMode.Clamp;
             m_sedimentField[0].filterMode = FilterMode.Bilinear;
             m_sedimentField[0].name = "Sediment Field 0";
-            m_sedimentField[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_sedimentField[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_sedimentField[1].wrapMode = TextureWrapMode.Clamp;
             m_sedimentField[1].filterMode = FilterMode.Bilinear;
             m_sedimentField[1].name = "Sediment Field 1";
 
-            m_advectSediment[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_advectSediment[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_advectSediment[0].wrapMode = TextureWrapMode.Clamp;
             m_advectSediment[0].filterMode = FilterMode.Bilinear;
             m_advectSediment[0].name = "Advect Sediment 0";
-            m_advectSediment[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_advectSediment[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_advectSediment[1].wrapMode = TextureWrapMode.Clamp;
             m_advectSediment[1].filterMode = FilterMode.Bilinear;
             m_advectSediment[1].name = "Advect Sediment 1";
@@ -398,7 +398,7 @@ namespace InterativeErosionProject
             m_tiltAngle.filterMode = FilterMode.Point;
             m_tiltAngle.name = "Tilt Angle";
 
-            m_slippageHeight = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RFloat);// was RHalf
+            m_slippageHeight = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
             m_slippageHeight.wrapMode = TextureWrapMode.Clamp;
             m_slippageHeight.filterMode = FilterMode.Point;
             m_slippageHeight.name = "Slippage Height";
@@ -694,7 +694,7 @@ namespace InterativeErosionProject
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-
+                
 
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
