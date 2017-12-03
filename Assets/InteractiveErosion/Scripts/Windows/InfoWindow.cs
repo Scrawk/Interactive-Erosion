@@ -21,24 +21,26 @@ namespace InterativeErosionProject
             {
                 var sb = new StringBuilder();
                 sb.Append("Selected point: ").Append(ControlPanel.selectedPoint);
-                //sb.Append("Water velocity: ").Append(sim.getDataRGHalf(sim.m_waterVelocity[0], Player.selectedPoint));
+                
 
                 var vector4 = sim.getTerrainLayers(ControlPanel.selectedPoint);
                 var terrainHeight = vector4.x + vector4.y + vector4.z + vector4.w;
 
                 sb.Append("\nTerrain height: ").Append(terrainHeight);
-                sb.Append("\n").Append((Layers)0).Append(" height: ").Append(vector4.x);
-                sb.Append("\n").Append((Layers)1).Append(" height: ").Append(vector4.y);
-                sb.Append("\n").Append((Layers)2).Append(" height: ").Append(vector4.z);
-                sb.Append("\n").Append((Layers)3).Append(" height: ").Append(vector4.w);
-
-                //sb.Append("\nSand in water: ").Append(sim.getSandInWater(ControlPanel.selectedPoint));
+                sb.Append("\n\t").Append((Layers)0).Append(" height: ").Append(vector4.x);
+                sb.Append("\n\t").Append((Layers)1).Append(" height: ").Append(vector4.y);
+                sb.Append("\n\t").Append((Layers)2).Append(" height: ").Append(vector4.z);
+                sb.Append("\n\t").Append((Layers)3).Append(" height: ").Append(vector4.w);
 
                 //var waterHeight = sim.getWaterLevel(ControlPanel.selectedPoint);
-                
-
                 //sb.Append("\nWater height: ").Append(waterHeight);
+               // sb.Append("\nWater height: ").Append(sim.getWaterLevel(ControlPanel.selectedPoint));
+
+                //sb.Append("Water velocity: ").Append(sim.getWaterVelocity(ControlPanel.selectedPoint));
+
                 //sb.Append("\nTotal height: ").Append(waterHeight + terrainHeight);
+
+                //sb.Append("\nSand in water: ").Append(sim.getSedimentInWater(ControlPanel.selectedPoint));
 
                 //Vector4 velocity4 = sim.getWaterVelocity(ControlPanel.selectedPoint);
                 //Vector2 velocity2 = new Vector2(velocity4.x, velocity4.y);
