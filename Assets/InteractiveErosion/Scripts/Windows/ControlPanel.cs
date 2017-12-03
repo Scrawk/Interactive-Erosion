@@ -11,7 +11,7 @@ namespace InterativeErosionProject
     {
         stone,
         cobble, clay, sand,
-        water, watersource, waterdrain, ocean
+        water, watersource, waterdrain, ocean, sediment
     }
 
     public class ControlPanel : Window
@@ -73,6 +73,8 @@ namespace InterativeErosionProject
                                 sim.MoveWaterDrainage(selectedPoint);                            
                             else if (selectedMaterial == MaterialsForEditing.ocean)
                                 sim.AddOcean(selectedPoint);
+                            else if (selectedMaterial == MaterialsForEditing.sediment)
+                                sim.AddSediment(selectedPoint);
                             else //rest of materials
                                 sim.AddToTerrainLayer(selectedMaterial, selectedPoint);
                         }
@@ -86,6 +88,8 @@ namespace InterativeErosionProject
                                 sim.MoveWaterDrainage(null);                            
                             else if (selectedMaterial == MaterialsForEditing.ocean)
                                 sim.RemoveOcean(selectedPoint);
+                            else if (selectedMaterial == MaterialsForEditing.sediment)
+                                sim.RemoveSediment(selectedPoint);
                             else //rest of materials
                                 sim.RemoveFromTerrainLayer(selectedMaterial, selectedPoint);
                         }

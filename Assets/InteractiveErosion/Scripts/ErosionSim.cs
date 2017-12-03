@@ -5,6 +5,9 @@
 // rename shaders +
 // visualize sediment field in water shader +
 // add water velocity visualization +
+// whole terrain editing +
+// update water drains to drain sand +
+// add actions for sediment +
 
 // good browni 51381BFF
 // good red 552710FF
@@ -29,12 +32,10 @@
 // make WorldSides class
 
 // reanimate info window
-// update water drains to drain sand
-// add actions for sediment
 // proper hide water
 // doesn't draw all map?
 // output shader - make it less laggy
-// whole terrain editing
+
 
 using UnityEngine;
 using System.Collections;
@@ -81,6 +82,7 @@ namespace InterativeErosionProject
 
         //The number of layers used in the simulation. Must be 1, 2, 3 or, 4
         private const int TERRAIN_LAYERS = 4;
+               
 
 
         //This will allow you to set a noise style for each terrain layer
@@ -105,6 +107,9 @@ namespace InterativeErosionProject
         //ie x is setting for layer 0, y is setting for layer 1 etc
 
         private Vector4 m_octaves = new Vector4(8, 6, 4, 8); //Higher octaves give more finer detail
+
+        
+
         private Vector4 m_frequency = new Vector4(4f, 2f, 2f, 2f); //A lower value gives larger scale details
         private Vector4 m_lacunarity = new Vector4(2.5f, 2.3f, 2.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
         private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of change of the noise frequency
@@ -1007,6 +1012,14 @@ namespace InterativeErosionProject
         {
             ChangeValueGaussZeroControl(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f, new Vector4(1f, 0f, 0f, 0f));
         }
+        public void AddSediment(Point point)
+        {
+            ChangeValueGauss(m_sedimentField, point.getVector2(TEX_SIZE), brushSize, brushPower / 50f, new Vector4(1f, 0f, 0f, 0f));
+        }
+        public void RemoveSediment(Point point)
+        {
+            ChangeValueGaussZeroControl(m_sedimentField, point.getVector2(TEX_SIZE), brushSize, brushPower *-1f /50f, new Vector4(1f, 0f, 0f, 0f));
+        }
         internal void MoveWaterSource(Point selectedPoint)
         {
             if (selectedPoint == null)
@@ -1107,6 +1120,7 @@ namespace InterativeErosionProject
                 ChangeValue(m_terrainField, new Vector4(oceanDepth, 0f, 0f, 0f), getPartOfMap(side, oceanWidth));
             }
         }
+        
         public float getTerrainLevel(Point point)
         {
             var vector4 = getData4Float32bits(m_terrainField[READ], point);
