@@ -1,5 +1,5 @@
 
-Shader "Erosion/ChangeValueAndCompareToZero"
+Shader "Erosion/ChangeValueZeroControl"
 {
 	//UNITY_SHADER_NO_UPGRADE
 	Properties

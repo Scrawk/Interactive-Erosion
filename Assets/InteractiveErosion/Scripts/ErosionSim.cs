@@ -3,6 +3,8 @@
 // add erosion limit +
 // check river formation +
 // rename shaders +
+// visualize sediment field in water shader +
+// add water velocity visualization +
 
 // good browni 51381BFF
 // good red 552710FF
@@ -20,19 +22,19 @@
 
 // check deltas 
 // check meanders
-// output shader
 // try grainy map
 // check regolith
 
-// visualize sedimentfield in water shader?
-
-// add water velocity visualization
-// update water drains to drain sand
-// doesn't draw all map?
 // simplify model
+// make WorldSides class
+
+// reanimate info window
+// update water drains to drain sand
 // add actions for sediment
 // proper hide water
-
+// doesn't draw all map?
+// output shader - make it less laggy
+// whole terrain editing
 
 using UnityEngine;
 using System.Collections;
@@ -62,7 +64,7 @@ namespace InterativeErosionProject
         public Material m_erosionAndDepositionMat, m_advectSedimentMat;
         public Material m_slippageHeightMat, m_slippageOutflowMat, m_slippageUpdateMat;
         public Material m_disintegrateAndDepositMat, m_applyFreeSlipMat;
-        public Material setFloatValueMat, changeValueMat, changeValueAndCompareToZeroMat, getValueMat, changValueGaussMat;
+        public Material setFloatValueMat, changeValueMat, changeValueZeroControlMat, getValueMat, changValueGaussMat, changValueGaussZeroControlMat;
 
 
         /// <summary> Movement speed of point of water source</summary>
@@ -124,8 +126,9 @@ namespace InterativeErosionProject
         /// The settings for the erosion. If the value is a vector4 each component is for a layer
         /// How easily the layer dissolves
         /// </summary>
-        public Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.008f, 0.012f);// rain
-                                                                                          //private Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.015f, 0.8f, 1.2f);// stream
+        ///  rain
+        public Vector4 m_dissolvingConstant = new Vector4(0.001f, 0.002f, 0.008f, 0.012f);
+        //private Vector4 m_dissolvingConstant = new Vector4(0.01f, 0.015f, 0.8f, 1.2f);// stream
 
 
         /// <summary>
@@ -393,15 +396,30 @@ namespace InterativeErosionProject
             RTUtility.Blit(field[READ], field[WRITE], setFloatValueMat, rect, 0, false);
             RTUtility.Swap(field);
         }
-        private void ChangeValueGauss(RenderTexture[] where, Vector2 point, float radius, float amount)
+        private void ChangeValueGauss(RenderTexture[] where, Vector2 point, float radius, float amount, Vector4 layerMask)
         {
             if (amount != 0f)
             {
                 changValueGaussMat.SetVector("_Point", point);
                 changValueGaussMat.SetFloat("_Radius", radius);
                 changValueGaussMat.SetFloat("_Amount", amount);
+                changValueGaussMat.SetVector("_LayerMask", layerMask);
 
                 Graphics.Blit(where[READ], where[WRITE], changValueGaussMat);
+                RTUtility.Swap(where);
+            }
+        }
+        
+        private void ChangeValueGaussZeroControl(RenderTexture[] where, Vector2 point, float radius, float amount, Vector4 layerMask)
+        {
+            if (amount != 0f)
+            {
+                changValueGaussZeroControlMat.SetVector("_Point", point);
+                changValueGaussZeroControlMat.SetFloat("_Radius", radius);
+                changValueGaussZeroControlMat.SetFloat("_Amount", amount);
+                changValueGaussZeroControlMat.SetVector("_LayerMask", layerMask);
+
+                Graphics.Blit(where[READ], where[WRITE], changValueGaussZeroControlMat);
                 RTUtility.Swap(where);
             }
         }
@@ -412,6 +430,13 @@ namespace InterativeErosionProject
             RTUtility.Blit(field[READ], field[WRITE], changeValueMat, rect, 0, false);
             RTUtility.Swap(field);
         }
+        private void ChangeValueZeroControl(RenderTexture[] field, Vector4 value, Rect rect)
+        {
+            Graphics.Blit(field[READ], field[WRITE]);
+            changeValueZeroControlMat.SetVector("_Value", value);
+            RTUtility.Blit(field[READ], field[WRITE], changeValueZeroControlMat, rect, 0, false);
+            RTUtility.Swap(field);
+        }
         /// <summary>
         /// Adds water everywhere 
         /// </summary>
@@ -419,8 +444,9 @@ namespace InterativeErosionProject
         {
             if (m_rainInputAmount > 0.0f)
             {
-                changeValueAndCompareToZeroMat.SetFloat("_Value", m_rainInputAmount);
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueAndCompareToZeroMat);
+                //ChangeValueZeroControl(m_waterField, )
+                changeValueZeroControlMat.SetFloat("_Value", m_rainInputAmount);
+                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueZeroControlMat);
                 RTUtility.Swap(m_waterField);
             }
             //float totalWaterChange = m_rainInputAmount * -1f + m_evaporationConstant;
@@ -440,14 +466,14 @@ namespace InterativeErosionProject
         {
             if (m_evaporationConstant > 0.0f)
             {
-                changeValueAndCompareToZeroMat.SetFloat("_Value", m_evaporationConstant * -1f);
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueAndCompareToZeroMat);
+                changeValueZeroControlMat.SetFloat("_Value", m_evaporationConstant * -1f);
+                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueZeroControlMat);
                 RTUtility.Swap(m_waterField);
             }
 
         }
 
-       
+
 
         /// <summary>
         ///  Calculates flow of field        
@@ -629,22 +655,22 @@ namespace InterativeErosionProject
                 RainInput();
                 ////WaterEvaporate();
                 if (m_waterInputAmount > 0f)
-                    ChangeValueGauss(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount);// WaterInput();
+                    ChangeValueGaussZeroControl(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount, new Vector4(1f, 0f, 0f, 0f));// WaterInput();
                 if (waterDrainageAmount > 0f)
                 {
-                    ChangeValueGauss(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f);
-                    //todo clear sand HERE
+                    ChangeValueGaussZeroControl(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f, new Vector4(1f, 0f, 0f, 0f));
+                    ChangeValueGaussZeroControl(m_terrainField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f, new Vector4(0f, 0f, 0f, 1f));
                 }
                 WaterEvaporate();
 
                 // set specified levels of water and terrain at oceans
                 foreach (var item in oceans)
                 {
-                    Rect rect = getPartOfMap(item, 1f);                   
+                    Rect rect = getPartOfMap(item, 1f);
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-                
+
 
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
@@ -657,7 +683,7 @@ namespace InterativeErosionProject
             }
             if (simulateRigolith)
             {
-                DisintegrateAndDeposit();                
+                DisintegrateAndDeposit();
                 FlowLiquid(m_regolithField, m_regolithOutFlow, m_regolithDamping);
             }
             if (simulateSlippage)
@@ -943,21 +969,43 @@ namespace InterativeErosionProject
             return destination;
         }
 
-        public void AddToTerrainLayer(int layer, Point point)
+        public void AddToTerrainLayer(MaterialsForEditing layer, Point point)
         {
-            ChangeValueGauss(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower);
+            Vector4 layerMask = default(Vector4);
+            if (layer == MaterialsForEditing.stone)
+                layerMask = new Vector4(1f, 0f, 0f, 0f);
+            else if (layer == MaterialsForEditing.cobble)
+                layerMask = new Vector4(0f, 1f, 0f, 0f);
+            else if (layer == MaterialsForEditing.clay)
+                layerMask = new Vector4(0f, 0f, 1f, 0f);
+            else if (layer == MaterialsForEditing.sand)
+                layerMask = new Vector4(0f, 0f, 0f, 1f);
+            ChangeValueGauss(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower, layerMask);
         }
-        public void RemoveFromTerrainLayer(int layer, Point point)
+        public void RemoveFromTerrainLayer(MaterialsForEditing layer, Point point)
         {
-            ChangeValueGauss(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
+            Vector4 layerMask = default(Vector4);
+            if (layer == MaterialsForEditing.stone)
+            {
+                layerMask = new Vector4(1f, 0f, 0f, 0f);
+                ChangeValueGauss(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f, layerMask);
+                return;
+            }
+            else if (layer == MaterialsForEditing.cobble)
+                layerMask = new Vector4(0f, 1f, 0f, 0f);
+            else if (layer == MaterialsForEditing.clay)
+                layerMask = new Vector4(0f, 0f, 1f, 0f);
+            else if (layer == MaterialsForEditing.sand)
+                layerMask = new Vector4(0f, 0f, 0f, 1f);
+            ChangeValueGaussZeroControl(m_terrainField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f, layerMask);
         }
         public void AddWater(Point point)
         {
-            ChangeValueGauss(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower);
+            ChangeValueGauss(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower, new Vector4(1f, 0f, 0f, 0f));
         }
         public void RemoveWater(Point point)
         {
-            ChangeValueGauss(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f);
+            ChangeValueGaussZeroControl(m_waterField, point.getVector2(TEX_SIZE), brushSize, brushPower * -1f, new Vector4(1f, 0f, 0f, 0f));
         }
         internal void MoveWaterSource(Point selectedPoint)
         {
@@ -1038,7 +1086,7 @@ namespace InterativeErosionProject
 
             return side;
         }
-        
+
         public void AddOcean(Point point)
         {
             var side = getSideOfWorld(point);

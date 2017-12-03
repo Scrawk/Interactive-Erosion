@@ -50,7 +50,14 @@ Shader "Erosion/ChangeValueGaussZeroControl"
 	float value = gauss * _Amount;
 
 	float4 res = tex2D(_MainTex, IN.uv) + _LayerMask * value;
-
+	if (_LayerMask.x == 1)
+	res.x = max(res.x, 0);
+	else if (_LayerMask.y == 1)
+	res.y = max(res.y, 0);
+	else if (_LayerMask.z == 1)
+	res.z = max(res.z, 0);
+	else if (_LayerMask.w == 1)
+	res.w = max(res.w, 0);
 	return res; // float4(waterAmount, 0, 0, 0);
 	}
 
