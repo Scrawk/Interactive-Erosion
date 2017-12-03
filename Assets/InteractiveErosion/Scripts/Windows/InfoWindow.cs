@@ -34,7 +34,7 @@ namespace InterativeErosionProject
 
                 //var waterHeight = sim.getWaterLevel(ControlPanel.selectedPoint);
                 //sb.Append("\nWater height: ").Append(waterHeight);
-               // sb.Append("\nWater height: ").Append(sim.getWaterLevel(ControlPanel.selectedPoint));
+                //sb.Append("\nWater height: ").Append(sim.getWaterLevel(ControlPanel.selectedPoint));
 
                 //sb.Append("Water velocity: ").Append(sim.getWaterVelocity(ControlPanel.selectedPoint));
 

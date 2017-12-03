@@ -12,6 +12,7 @@
 // update water drains to drain sand +
 // add actions for sediment +
 // proper hide water +
+// remove lags from info window
 
 
 // add texture of rain and evaporation amount? Will give oceans? No, it wouldn't
@@ -955,8 +956,16 @@ namespace InterativeErosionProject
         private Vector4 getDataRFloatEF(RenderTexture source, Point point)
         {
             Graphics.CopyTexture(source, 0, 0, point.x, point.y, 1, 1, tempT2DRFloat, 0, 0, 0, 0);
-            tempT2DRFloat = GetRTPixels(tempRTRFloat, tempT2DRFloat);
-            var res = tempT2DRFloat.GetPixel(0, 0);
+            var del = new RenderTexture(1, 1, 0, RenderTextureFormat.ARGBHalf);
+            del.wrapMode = TextureWrapMode.Clamp;
+            del.filterMode = FilterMode.Point;
+            del.Create();
+            Graphics.ConvertTexture(tempRTRFloat, del);
+
+            tempT2DRGBA= GetRTPixels(tempRTARGB, tempT2DRGBA);
+            var res = tempT2DRGBA.GetPixel(0, 0);
+            //tempT2DRFloat = GetRTPixels(tempRTRFloat, tempT2DRFloat);
+            //var res = tempT2DRFloat.GetPixel(0, 0);
             return res;
         }
         /// <summary>
@@ -1145,12 +1154,12 @@ namespace InterativeErosionProject
         }
         internal Vector4 getSedimentInWater(Point selectedPoint)
         {
-            return getDataRGBAFloatEF(m_sedimentField[READ], selectedPoint);
+            return getDataRFloatEF(m_sedimentField[READ], selectedPoint);
         }
         internal Vector4 getWaterLevel(Point selectedPoint)
         {
             
-            return getDataRGBAFloatEF(m_waterField[READ], selectedPoint);
+            return getDataRFloatEF(m_waterField[READ], selectedPoint);
 
             //Vector4 value = new Vector4(0f,1f,2,3f);
             //getValueMat.SetVector("_Coords", selectedPoint.getVector2(TEX_SIZE));
