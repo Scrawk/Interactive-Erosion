@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace InterativeErosionProject
@@ -24,9 +25,9 @@ namespace InterativeErosionProject
         public ErosionSim sim;
 
         [SerializeField]
-        private Plane referencePlane = new Plane(Vector3.up, Vector3.zero);
+        //private Plane referencePlane = new Plane(Vector3.up, Vector3.zero);
 
-        static public Point selectedPoint;
+        static public Vector2 selectedPoint;
         static public Action selectedAction = Action.Info;
         internal static MaterialsForEditing selectedMaterial;
 
@@ -45,9 +46,10 @@ namespace InterativeErosionProject
         void Update()
         {
             Refresh();
-            if (selectedAction != Action.Nothing && Input.GetMouseButton(0))
+            if (selectedAction != Action.Nothing && Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
             {
-                var clickedPosition = raycastSelectedPoint();
+                // currently. works as for flat plane
+                var clickedPosition = RaycastToMesh();
 
                 if (selectedPoint == null)
                     mapPointer.SetActive(false);
@@ -70,7 +72,7 @@ namespace InterativeErosionProject
                             else if (selectedMaterial == MaterialsForEditing.watersource)
                                 sim.MoveWaterSource(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.waterdrain)
-                                sim.MoveWaterDrainage(selectedPoint);                            
+                                sim.MoveWaterDrainage(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.ocean)
                                 sim.AddOcean(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.sediment)
@@ -83,9 +85,9 @@ namespace InterativeErosionProject
                             if (selectedMaterial == MaterialsForEditing.water)
                                 sim.RemoveWater(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.watersource)
-                                sim.MoveWaterSource(null);
+                                sim.MoveWaterSource(default(Vector2));
                             else if (selectedMaterial == MaterialsForEditing.waterdrain)
-                                sim.MoveWaterDrainage(null);                            
+                                sim.MoveWaterDrainage(default(Vector2));
                             else if (selectedMaterial == MaterialsForEditing.ocean)
                                 sim.RemoveOcean(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.sediment)
@@ -95,32 +97,39 @@ namespace InterativeErosionProject
                         }
                         else if (selectedAction == Action.Info)
                             infoWindow.Show();
-
-
                     }
                 }
             }
         }
-        private Vector3 raycastSelectedPoint()
+        
+        private Vector3 RaycastToMesh()
         {
-            Vector3 clickedPosition = default(Vector3);
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            float rayDistance;
-            if (referencePlane.Raycast(ray, out rayDistance))
+            // Bit shift the index of the layer (8) to get a bit mask
+            //var layerMask = 1 << 5;
+            // This would cast rays only against colliders in layer 8.
+            // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.            
+            //layerMask = ~layerMask;
+            RaycastHit hit;
+            if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity))//, layerMask
             {
-                // convert this to texture UV
-                clickedPosition = ray.GetPoint(rayDistance);
-
-                int xInTexture = (int)(clickedPosition.x * 2f + ErosionSim.TOTAL_GRID_SIZE);
-                int yInTexture = (int)((clickedPosition.z) * 2f + ErosionSim.TOTAL_GRID_SIZE);
-
-                if (xInTexture >= 0 && xInTexture <= ErosionSim.MAX_TEX_INDEX
-                    && yInTexture >= 0 && yInTexture <= ErosionSim.MAX_TEX_INDEX)
-                    selectedPoint = new Point(xInTexture, yInTexture);
-                else
-                    selectedPoint = null;
+                {
+                    //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.white);
+                    selectedPoint = default(Vector2);
+                    //Debug.Log("Missed");
+                    return default(Vector2);// -1;
+                }
             }
-            return clickedPosition;
+            //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
+            MeshCollider meshCollider = hit.collider as MeshCollider;
+
+            if (meshCollider == null || meshCollider.sharedMesh == null)
+            {
+                selectedPoint = default(Vector2);
+                //Debug.Log("Missed");
+                return default(Vector2);//2;
+            }
+            selectedPoint = hit.textureCoord;
+            return hit.point;
         }
         void rebuildDropDown()
         {
@@ -151,6 +160,26 @@ namespace InterativeErosionProject
         {
             selectedMaterial = (MaterialsForEditing)materialChoiseDD.value;
         }
+        //private Vector2 RaycastToPlain()
+        //{
+        //    Vector3 clickedPosition = default(Vector3);
+        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        //    float rayDistance;
+        //    if (referencePlane.Raycast(ray, out rayDistance))
+        //    {
+        //        // convert this to texture UV
+        //        clickedPosition = ray.GetPoint(rayDistance);
 
+        //        int xInTexture = (int)(clickedPosition.x * 2f + ErosionSim.TOTAL_GRID_SIZE);
+        //        int yInTexture = (int)((clickedPosition.z) * 2f + ErosionSim.TOTAL_GRID_SIZE);
+
+        //        if (xInTexture >= 0 && xInTexture <= ErosionSim.MAX_TEX_INDEX
+        //            && yInTexture >= 0 && yInTexture <= ErosionSim.MAX_TEX_INDEX)
+        //            selectedPoint = new Point(xInTexture, yInTexture);
+        //        else
+        //            selectedPoint = null;
+        //    }
+        //    return clickedPosition;
+        //}
     }
 }

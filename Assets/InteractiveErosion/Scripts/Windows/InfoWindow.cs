@@ -20,7 +20,7 @@ namespace InterativeErosionProject
             if (ControlPanel.selectedPoint != null)
             {
                 var sb = new StringBuilder();
-                sb.Append("Selected point: ").Append(ControlPanel.selectedPoint);
+                sb.AppendFormat("Selected point: x = {0}, y = {1}", ControlPanel.selectedPoint.x.ToString("F3"), ControlPanel.selectedPoint.y.ToString("F3"));
 
 
                 var vector4 = sim.getTerrainLayers(ControlPanel.selectedPoint);
