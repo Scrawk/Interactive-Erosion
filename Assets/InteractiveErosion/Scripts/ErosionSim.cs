@@ -12,7 +12,7 @@
 // update water drains to drain sand +
 // add actions for sediment +
 // proper hide water +
-// remove lags from info window
+// remove lags from info window +
 
 
 // add texture of rain and evaporation amount? Will give oceans? No, it wouldn't
@@ -38,7 +38,7 @@
 
 // reanimate info window
 // doesn't draw all map?
-// output shader - make it less laggy
+
 
 // add arrows visualization
 // check deltas 
@@ -183,7 +183,7 @@ namespace InterativeErosionProject
         public float oceanDestroySedimentsLevel = 0f;
         public float oceanDepth = 4f;
         public float oceanWaterLevel = 20f;
-        public float oceanWidth = 83f;
+        public int oceanWidth = 110;
 
         ///<summary> Meshes</summary>
         private GameObject[] m_gridLand, m_gridWater;
@@ -297,13 +297,13 @@ namespace InterativeErosionProject
             float u = 1.0f / (float)TEX_SIZE;
 
             m_rectLeft = new Rect(0.0f, 0.0f, u, 1.0f);
-            //m_rectRight = new Rect(1.0f - u, 0.0f, u, 1.0f);
-            m_rectRight = new Rect(1.0f - u, 0.0f, -u, 1.0f);
+            m_rectRight = new Rect(1.0f - u, 0f, u, 1f);
+            //m_rectRight = new Rect(1.0f , 0.0f, 1, 1.0f);
 
 
             m_rectBottom = new Rect(0.0f, 0.0f, 1.0f, u);
-            //m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, u);
-            m_rectTop = new Rect(0.0f, 1.0f - u, 1.0f, -u);
+            m_rectTop = new Rect(0.0f, 1f -u , 1.0f, u);
+            //m_rectTop = new Rect(0.0f, 1.0f, 1.0f, 1-u);
 
 
             withoutEdges = new Rect(0.0f + u, 0.0f + u, 1.0f - u, 1.0f - u);
@@ -449,7 +449,7 @@ namespace InterativeErosionProject
         }
         private void ChangeValue(RenderTexture[] field, Vector4 value, Rect rect)
         {
-            //Graphics.Blit(field[READ], field[WRITE]);
+            //Graphics.Blit(field[READ], field[WRITE]); // don't know why but need it
             changeValueMat.SetVector("_Value", value);
             RTUtility.Blit(field[READ], field[WRITE], changeValueMat, rect, 0, false);
             RTUtility.Swap(field);
@@ -637,6 +637,11 @@ namespace InterativeErosionProject
 
             if (simulateWaterFlow)
             {
+                /// Evaporate water everywhere 
+                if (m_evaporationConstant > 0.0f)
+                {
+                    ChangeValueZeroControl(m_waterField, m_evaporationConstant * -1f, entireMap);
+                }
                 if (m_rainInputAmount > 0.0f)
                 {
                     ChangeValue(m_waterField, new Vector4(m_rainInputAmount, 0f, 0f, 0f), entireMap);                    
@@ -654,15 +659,11 @@ namespace InterativeErosionProject
                 // set specified levels of water and terrain at oceans
                 foreach (var item in oceans)
                 {
-                    Rect rect = getPartOfMap(item, 1f);
+                    Rect rect = getPartOfMap(item, 1);
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-                /// Evaporate water everywhere 
-                if (m_evaporationConstant > 0.0f)
-                {
-                    ChangeValueZeroControl(m_waterField, m_evaporationConstant * -1f, entireMap);
-                }
+               
                 
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
@@ -1040,28 +1041,31 @@ namespace InterativeErosionProject
         /// <summary>
         /// get rect-part of world texture according to world side
         /// </summary>
-        private Rect getPartOfMap(WorldSides side, float width)
+        private Rect getPartOfMap(WorldSides side, int width)
         {
+            float offest = width / (float)TEX_SIZE;
             Rect rect = default(Rect);
             if (side == WorldSides.North)
             {
                 rect = m_rectTop;
-                rect.height *= width;// *-1f;                
+                rect.height+= offest;// *-1f;                
+                rect.y -= offest;
             }
             else if (side == WorldSides.South)
             {
                 rect = m_rectBottom;
-                rect.height *= width;
+                rect.height += offest;
             }
             else if (side == WorldSides.East)
             {
                 rect = m_rectRight;
-                rect.width *= width;
+                rect.x -= offest;
+                rect.width += offest;
             }
             else if (side == WorldSides.West)
             {
                 rect = m_rectLeft;
-                rect.width *= width;// * -1f;
+                rect.width += offest;// * -1f;
             }
             return rect;
         }
@@ -1097,7 +1101,7 @@ namespace InterativeErosionProject
                 oceans.Add(side);
                 //oceans = oceans & side;
                 // clear ocean bottom
-                ChangeValue(m_terrainField, new Vector4(oceanDepth * -1f, 0f, 0f, 0f), getPartOfMap(side, oceanWidth));
+                ChangeValue(m_terrainField, new Vector4(oceanDepth * -1f, 0f, 0, 0f), getPartOfMap(side, oceanWidth));
             }
         }
         public void RemoveOcean(Point point)
@@ -1190,6 +1194,7 @@ namespace InterativeErosionProject
         }
         public void SetWaterZFighting(float value)
         {
+            //todo save initial value
             m_waterMat.SetFloat("_MinWaterHt", value);
         }
     }
