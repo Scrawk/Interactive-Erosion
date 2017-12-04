@@ -1,31 +1,14 @@
 // good browni 51381BFF
 // good red 552710FF
 
-// add drainage +
-// add oceans +
-// add erosion limit +
-// check river formation +
-// rename shaders +
-// visualize sediment field in water shader +
-// add water velocity visualization +
-// whole terrain editing +
-// update water drains to drain sand +
-// add actions for sediment +
-// proper hide water +
-// remove lags from info window +
-
 
 // add texture of rain and evaporation amount? Will give oceans? No, it wouldn't
 // add multiple water sources than?
 
-// add text for water sources?
-
 // tilt angel breaks erosion? - min title did
 // add lava
-// add stone - cobblestone conversion?
 // add layers of material on init?
 // InteractiveErosion class
-
 
 // check meanders
 // try grainy map - failed
@@ -33,15 +16,7 @@
 
 // simplify model
 // make WorldSides class
-
-// add tectonic plates
-
 // reanimate info window
-// doesn't draw all map?
-
-
-// add arrows visualization
-// check deltas 
 
 
 using UnityEngine;
@@ -165,10 +140,10 @@ namespace InterativeErosionProject
         public float dissolveLimit = 0.001f;
 
         /// <summary>Evaporation rate of water</summary>
-        public float m_evaporationConstant = 0.001f;
+        private float m_evaporationConstant = 0.001f;
 
         /// <summary> Movement speed of point of water source</summary>
-        public float m_rainInputAmount = 0.0011f;
+        private float m_rainInputAmount = 0.0011f;
 
 
         /// <summary>Viscosity of regolith</summary>
@@ -1196,6 +1171,14 @@ namespace InterativeErosionProject
         {
             //todo save initial value
             m_waterMat.SetFloat("_MinWaterHt", value);
+        }
+        public void SetRainPower(float value)
+        {
+            m_rainInputAmount = value;
+        }
+        public void SetEvaporationPower(float value)
+        {
+            m_evaporationConstant = value;
         }
     }
 }
