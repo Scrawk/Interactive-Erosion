@@ -42,9 +42,7 @@
 
 // add arrows visualization
 // check deltas 
-// add delta time in all simulation
-// rain/evaporation control
-// better ray casting
+
 
 using UnityEngine;
 using System.Collections;
@@ -417,7 +415,7 @@ namespace InterativeErosionProject
         // put it in separate class
         private void SetValue(RenderTexture[] field, Vector4 value, Rect rect)
         {
-            Graphics.Blit(field[READ], field[WRITE]);
+            //Graphics.Blit(field[READ], field[WRITE]);
             setFloatValueMat.SetVector("_Value", value);
             RTUtility.Blit(field[READ], field[WRITE], setFloatValueMat, rect, 0, false);
             RTUtility.Swap(field);
@@ -458,10 +456,9 @@ namespace InterativeErosionProject
         }
         private void ChangeValueZeroControl(RenderTexture[] field, float value, Rect rect)
         {
-            //Graphics.Blit(field[READ], field[WRITE]);
-            changeValueZeroControlMat.SetFloat("_Value", value);
-            RTUtility.Blit(field[READ], field[WRITE], changeValueZeroControlMat, rect, 0, false);
-            RTUtility.Swap(field);
+            changeValueZeroControlMat.SetFloat("_Value", m_evaporationConstant * -1f);
+            Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueZeroControlMat);
+            RTUtility.Swap(m_waterField);
         }
 
 
@@ -631,8 +628,8 @@ namespace InterativeErosionProject
                     RTUtility.Swap(m_terrainField);
                 }
             }
-
-        }
+        }       
+        
         private void Simulate()
         {
             RTUtility.SetToPoint(m_terrainField);
@@ -642,9 +639,9 @@ namespace InterativeErosionProject
             {
                 if (m_rainInputAmount > 0.0f)
                 {
-                    ChangeValue(m_waterField, new Vector4(m_rainInputAmount, 0f, 0f, 0f), entireMap);
-                    //ChangeValueZeroControl(m_waterField, m_rainInputAmount, entireMap);
+                    ChangeValue(m_waterField, new Vector4(m_rainInputAmount, 0f, 0f, 0f), entireMap);                    
                 }
+                
 
                 if (m_waterInputAmount > 0f)
                     ChangeValueGaussZeroControl(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount, new Vector4(1f, 0f, 0f, 0f));// WaterInput();
@@ -654,16 +651,6 @@ namespace InterativeErosionProject
                     ChangeValueGaussZeroControl(m_terrainField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f, new Vector4(0f, 0f, 0f, 1f));
                 }
 
-
-                /// Evaporate water everywhere 
-                if (m_evaporationConstant > 0.0f)
-                {
-                    //ChangeValue(m_waterField, new Vector4(m_evaporationConstant *-1f, 0f, 0f, 0f), entireMap);
-                    ChangeValueZeroControl(m_waterField, m_evaporationConstant * -1f, entireMap);                    
-                }
-
-
-
                 // set specified levels of water and terrain at oceans
                 foreach (var item in oceans)
                 {
@@ -671,7 +658,12 @@ namespace InterativeErosionProject
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-
+                /// Evaporate water everywhere 
+                if (m_evaporationConstant > 0.0f)
+                {
+                    ChangeValueZeroControl(m_waterField, m_evaporationConstant * -1f, entireMap);
+                }
+                
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
             }
