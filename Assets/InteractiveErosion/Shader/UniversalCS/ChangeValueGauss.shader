@@ -1,5 +1,5 @@
 //UNITY_SHADER_NO_UPGRADE
-Shader "Erosion/ChangeValueGaussZeroControl"
+Shader "Erosion/ChangeValueGauss"
 {
 	Properties
 	{

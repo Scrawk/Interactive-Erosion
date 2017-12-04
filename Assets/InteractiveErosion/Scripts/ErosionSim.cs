@@ -223,7 +223,7 @@ namespace InterativeErosionProject
         public RenderTexture m_slippageOutflow;
 
 
-        private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom, withoutEdges;
+        private Rect m_rectLeft, m_rectRight, m_rectTop, m_rectBottom, withoutEdges, entireMap;
 
         //The resolution of the textures used for the simulation. You can change this to any number
         //Does not have to be a pow2 number. You will run out of GPU memory if made to high.
@@ -264,7 +264,7 @@ namespace InterativeErosionProject
             m_seed = UnityEngine.Random.Range(0, int.MaxValue);
 
             tempRTARGB = new RenderTexture(1, 1, 0, RenderTextureFormat.ARGBFloat);
-            tempRTARGB.wrapMode = TextureWrapMode.Clamp;            
+            tempRTARGB.wrapMode = TextureWrapMode.Clamp;
             tempRTARGB.filterMode = FilterMode.Point;
             tempRTARGB.Create();
 
@@ -309,6 +309,7 @@ namespace InterativeErosionProject
 
 
             withoutEdges = new Rect(0.0f + u, 0.0f + u, 1.0f - u, 1.0f - u);
+            entireMap = new Rect(0f, 0f, 1f, 1f);
 
 
             m_terrainField = new RenderTexture[2];
@@ -413,6 +414,7 @@ namespace InterativeErosionProject
             InitMaps();
 
         }
+        // put it in separate class
         private void SetValue(RenderTexture[] field, Vector4 value, Rect rect)
         {
             Graphics.Blit(field[READ], field[WRITE]);
@@ -449,54 +451,18 @@ namespace InterativeErosionProject
         }
         private void ChangeValue(RenderTexture[] field, Vector4 value, Rect rect)
         {
-            Graphics.Blit(field[READ], field[WRITE]);
+            //Graphics.Blit(field[READ], field[WRITE]);
             changeValueMat.SetVector("_Value", value);
             RTUtility.Blit(field[READ], field[WRITE], changeValueMat, rect, 0, false);
             RTUtility.Swap(field);
         }
-        private void ChangeValueZeroControl(RenderTexture[] field, Vector4 value, Rect rect)
+        private void ChangeValueZeroControl(RenderTexture[] field, float value, Rect rect)
         {
-            Graphics.Blit(field[READ], field[WRITE]);
-            changeValueZeroControlMat.SetVector("_Value", value);
+            //Graphics.Blit(field[READ], field[WRITE]);
+            changeValueZeroControlMat.SetFloat("_Value", value);
             RTUtility.Blit(field[READ], field[WRITE], changeValueZeroControlMat, rect, 0, false);
             RTUtility.Swap(field);
         }
-        /// <summary>
-        /// Adds water everywhere 
-        /// </summary>
-        private void RainInput()
-        {
-            if (m_rainInputAmount > 0.0f)
-            {
-                //ChangeValueZeroControl(m_waterField, )
-                changeValueZeroControlMat.SetFloat("_Value", m_rainInputAmount);
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueZeroControlMat);
-                RTUtility.Swap(m_waterField);
-            }
-            //float totalWaterChange = m_rainInputAmount * -1f + m_evaporationConstant;
-
-            //if (totalWaterChange != 0f)
-            //{
-            //    m_evaprationMat.SetFloat("_EvaporationConstant", totalWaterChange);
-
-            //    Graphics.Blit(m_waterField[READ], m_waterField[WRITE], m_evaprationMat);
-            //    RTUtility.Swap(m_waterField);
-            //}
-        }
-        /// <summary>
-        /// Evaporate water everywhere 
-        /// </summary>
-        private void WaterEvaporate()
-        {
-            if (m_evaporationConstant > 0.0f)
-            {
-                changeValueZeroControlMat.SetFloat("_Value", m_evaporationConstant * -1f);
-                Graphics.Blit(m_waterField[READ], m_waterField[WRITE], changeValueZeroControlMat);
-                RTUtility.Swap(m_waterField);
-            }
-
-        }
-
 
 
         /// <summary>
@@ -516,7 +482,6 @@ namespace InterativeErosionProject
             m_outFlowMat.SetTexture("_Field", liquidField[READ]);
 
             Graphics.Blit(outFlow[READ], outFlow[WRITE], m_outFlowMat);
-            //RTUtility.Blit(outFlow[READ], outFlow[WRITE], m_outFlowMat, withoutEdges, 0, false);
 
             RTUtility.Swap(outFlow);
 
@@ -526,7 +491,6 @@ namespace InterativeErosionProject
             m_fieldUpdateMat.SetTexture("_OutFlowField", outFlow[READ]);
 
             Graphics.Blit(liquidField[READ], liquidField[WRITE], m_fieldUpdateMat);
-            //RTUtility.Blit(liquidField[READ], liquidField[WRITE], m_fieldUpdateMat, withoutEdges, 0, false);
             RTUtility.Swap(liquidField);
         }
         /// <summary>
@@ -676,8 +640,12 @@ namespace InterativeErosionProject
 
             if (simulateWaterFlow)
             {
-                RainInput();
-                ////WaterEvaporate();
+                if (m_rainInputAmount > 0.0f)
+                {
+                    ChangeValue(m_waterField, new Vector4(m_rainInputAmount, 0f, 0f, 0f), entireMap);
+                    //ChangeValueZeroControl(m_waterField, m_rainInputAmount, entireMap);
+                }
+
                 if (m_waterInputAmount > 0f)
                     ChangeValueGaussZeroControl(m_waterField, m_waterInputPoint, m_waterInputRadius, m_waterInputAmount, new Vector4(1f, 0f, 0f, 0f));// WaterInput();
                 if (waterDrainageAmount > 0f)
@@ -685,7 +653,16 @@ namespace InterativeErosionProject
                     ChangeValueGaussZeroControl(m_waterField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f, new Vector4(1f, 0f, 0f, 0f));
                     ChangeValueGaussZeroControl(m_terrainField, waterDrainagePoint, waterDrainageRadius, waterDrainageAmount * -1f, new Vector4(0f, 0f, 0f, 1f));
                 }
-                WaterEvaporate();
+
+
+                /// Evaporate water everywhere 
+                if (m_evaporationConstant > 0.0f)
+                {
+                    //ChangeValue(m_waterField, new Vector4(m_evaporationConstant *-1f, 0f, 0f, 0f), entireMap);
+                    ChangeValueZeroControl(m_waterField, m_evaporationConstant * -1f, entireMap);                    
+                }
+
+
 
                 // set specified levels of water and terrain at oceans
                 foreach (var item in oceans)
@@ -694,7 +671,6 @@ namespace InterativeErosionProject
                     SetValue(m_waterField, new Vector4(oceanWaterLevel, 0f, 0f, 0f), rect);
                     SetValue(m_terrainField, new Vector4(oceanDestroySedimentsLevel, 0f, 0f, 0f), rect);
                 }
-                
 
                 FlowLiquid(m_waterField, m_waterOutFlow, m_waterDamping);
                 CalcWaterVelocity();
@@ -945,10 +921,10 @@ namespace InterativeErosionProject
         }
 
 
-        
+
         private Vector4 getDataRGBAFloatEF(RenderTexture source, Point point)
-        {    
-            Graphics.CopyTexture(source, 0, 0, point.x, point.y, 1, 1, tempRTARGB, 0, 0, 0, 0);         
+        {
+            Graphics.CopyTexture(source, 0, 0, point.x, point.y, 1, 1, tempRTARGB, 0, 0, 0, 0);
             tempT2DRGBA = GetRTPixels(tempRTARGB, tempT2DRGBA);
             var res = tempT2DRGBA.GetPixel(0, 0);
             return res;
@@ -962,7 +938,7 @@ namespace InterativeErosionProject
             del.Create();
             Graphics.ConvertTexture(tempRTRFloat, del);
 
-            tempT2DRGBA= GetRTPixels(tempRTARGB, tempT2DRGBA);
+            tempT2DRGBA = GetRTPixels(tempRTARGB, tempT2DRGBA);
             var res = tempT2DRGBA.GetPixel(0, 0);
             //tempT2DRFloat = GetRTPixels(tempRTRFloat, tempT2DRFloat);
             //var res = tempT2DRFloat.GetPixel(0, 0);
@@ -1158,7 +1134,7 @@ namespace InterativeErosionProject
         }
         internal Vector4 getWaterLevel(Point selectedPoint)
         {
-            
+
             return getDataRFloatEF(m_waterField[READ], selectedPoint);
 
             //Vector4 value = new Vector4(0f,1f,2,3f);

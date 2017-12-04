@@ -23,14 +23,14 @@ namespace InterativeErosionProject
                 sb.Append("Selected point: ").Append(ControlPanel.selectedPoint);
                 
 
-                var vector4 = sim.getTerrainLayers(ControlPanel.selectedPoint);
-                var terrainHeight = vector4.x + vector4.y + vector4.z + vector4.w;
+                //var vector4 = sim.getTerrainLayers(ControlPanel.selectedPoint);
+                //var terrainHeight = vector4.x + vector4.y + vector4.z + vector4.w;
 
-                sb.Append("\nTerrain height: ").Append(terrainHeight);
-                sb.Append("\n\t").Append((Layers)0).Append(" height: ").Append(vector4.x);
-                sb.Append("\n\t").Append((Layers)1).Append(" height: ").Append(vector4.y);
-                sb.Append("\n\t").Append((Layers)2).Append(" height: ").Append(vector4.z);
-                sb.Append("\n\t").Append((Layers)3).Append(" height: ").Append(vector4.w);
+                //sb.Append("\nTerrain height: ").Append(terrainHeight);
+                //sb.Append("\n\t").Append((Layers)0).Append(" height: ").Append(vector4.x);
+                //sb.Append("\n\t").Append((Layers)1).Append(" height: ").Append(vector4.y);
+                //sb.Append("\n\t").Append((Layers)2).Append(" height: ").Append(vector4.z);
+                //sb.Append("\n\t").Append((Layers)3).Append(" height: ").Append(vector4.w);
 
                 //var waterHeight = sim.getWaterLevel(ControlPanel.selectedPoint);
                 //sb.Append("\nWater height: ").Append(waterHeight);
