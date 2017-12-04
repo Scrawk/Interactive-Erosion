@@ -340,11 +340,11 @@ namespace InterativeErosionProject
             m_waterOutFlow[1].filterMode = FilterMode.Point;
             m_waterOutFlow[1].name = "Water outflow 1";
 
-            m_waterVelocity[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
+            m_waterVelocity[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RGHalf);// was RGHalf
             m_waterVelocity[0].wrapMode = TextureWrapMode.Clamp;
             m_waterVelocity[0].filterMode = FilterMode.Bilinear;
             m_waterVelocity[0].name = "Water Velocity 0";
-            m_waterVelocity[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
+            m_waterVelocity[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RGHalf);// was RGHalf
             m_waterVelocity[1].wrapMode = TextureWrapMode.Clamp;
             m_waterVelocity[1].filterMode = FilterMode.Bilinear;
             m_waterVelocity[1].name = "Water Velocity 1";
