@@ -110,7 +110,8 @@ namespace InterativeErosionProject
     {
         stone,
         cobble, clay, sand,
-        water, watersource, waterdrain, ocean, sediment
+        water, watersource, waterdrain,  sediment
+        ,ocean
     }
 }
 

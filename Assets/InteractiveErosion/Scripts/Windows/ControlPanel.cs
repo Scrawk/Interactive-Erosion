@@ -34,7 +34,7 @@ namespace InterativeErosionProject
         // Use this for initialization
         void Start()
         {
-            RebuildActionDD();
+            rebuildActionDD();
             RebuildMaterialDD();
             RebuildOverlayDD();
         }
@@ -139,7 +139,7 @@ namespace InterativeErosionProject
             }
             overlayDD.RefreshShownValue();
         }
-        void RebuildActionDD()
+        void rebuildActionDD()
         {
             //actionDD.interactable = true;
             actionDD.ClearOptions();
@@ -172,7 +172,7 @@ namespace InterativeErosionProject
         }
         public void onOverlayDDChanged()
         {
-            sim.SetOverlay(Overlay.getById(overlayDD.value));            
+            sim.SetOverlay(Overlay.getById(materialChoiseDD.value));            
         }
 
         //private Vector2 RaycastToPlain()
