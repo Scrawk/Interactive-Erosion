@@ -66,6 +66,51 @@ namespace InterativeErosionProject
         {
             return list[value];
         }
-    }    
+    }
+    public class Overlay
+    {
+        private readonly string name;
+        private readonly Material material;
+        private readonly int ID;
+        static private readonly List<Overlay> list = new List<Overlay>();
+        static public Overlay Default = new Overlay("Default", null);
+        static public Overlay Deposition = new Overlay("Deposition", null);
+        static public Overlay WaterSpeed = new Overlay("Water speed", null);
+        static public Overlay Info = new Overlay("Info", null);
+        private Overlay(string name, Material material)
+        {
+            this.name = name;
+            this.material = material;
+            ID = list.Count;
+            list.Add(this);
+        }
+        static public IEnumerable<Overlay> getAllPossible()
+        {
+            foreach (var item in list)
+            {
+                yield return item;
+            }
+        }
+        public override string ToString()
+        {
+            return name;
+        }
+
+        internal static Overlay getById(int value)
+        {
+            return list[value];
+        }
+        public int getID()
+        {
+            return ID;
+        }
+       
+    }
+    public enum MaterialsForEditing
+    {
+        stone,
+        cobble, clay, sand,
+        water, watersource, waterdrain, ocean, sediment
+    }
 }
 

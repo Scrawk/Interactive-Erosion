@@ -8,11 +8,7 @@
 // tilt angel breaks erosion? - min title did
 // add lava
 // add layers of material on init?
-// InteractiveErosion class
 
-// check meanders
-// try grainy map - failed
-// check regolith
 
 // simplify model
 // make WorldSides class
@@ -33,7 +29,10 @@ namespace InterativeErosionProject
     public class ErosionSim : MonoBehaviour
     {
         public GameObject m_sun;
+        ///<summary> Used for rendering</summary>
         public Material m_landMat, m_waterMat;
+        public Material[] overlays;
+
         public Material m_initTerrainMat, m_noiseMat;
         public Material m_outFlowMat;
         ///<summary> Updates field according to outflow</summary>
@@ -95,7 +94,7 @@ namespace InterativeErosionProject
         private Vector4 m_frequency = new Vector4(4f, 2f, 2f, 2f); //A lower value gives larger scale details
         private Vector4 m_lacunarity = new Vector4(2.5f, 2.3f, 2.0f, 2.0f); //Rate of change of the noise amplitude. Should be between 1 and 3 for fractal noise
         private Vector4 m_gain = new Vector4(0.5f, 0.5f, 0.5f, 0.5f); //Rate of change of the noise frequency
-        static private float terrainAmountScale = 0.3f;
+        static private float terrainAmountScale = 0.5f;
         //private Vector4 m_amp = new Vector4(6.0f * terrainAmountScale, 3f * terrainAmountScale, 6f * terrainAmountScale, 0.15f * terrainAmountScale); //Amount of terrain in a layer        
         private Vector4 m_amp = new Vector4(2f * terrainAmountScale, 1f * terrainAmountScale, 2f * terrainAmountScale, 1f * terrainAmountScale); //Amount of terrain in a layer        
 
@@ -172,6 +171,9 @@ namespace InterativeErosionProject
         ///<summary> Actual amount of dissolved sediment in water</summary>
         public RenderTexture[] m_sedimentField;
 
+        ///<summary> Actual amount of dissolved sediment in water</summary>
+        public RenderTexture[] sedimentDeposition;
+
         ///<summary> Contains regolith amount.Regolith is quasi-liquid at the bottom of water flow</summary>
         public RenderTexture[] m_regolithField;
 
@@ -220,7 +222,7 @@ namespace InterativeErosionProject
         private const int READ = 0;
         private const int WRITE = 1;
 
-
+        private Overlay currentOverlay = Overlay.Default;
 
         //public Texture2D bufferRGHalfTexture;
         //public Texture2D bufferARGBFloatTexture;
@@ -228,11 +230,21 @@ namespace InterativeErosionProject
 
         //private readonly
         public List<WorldSides> oceans = new List<WorldSides>();
+        private readonly Color[] layersColors = new Color[4] {
+            new Vector4(123,125,152,155).normalized,
+            new Vector4(91f, 91f, 99f, 355f).normalized,
+            new Vector4(113,52,21,355).normalized,
+            new Vector4(157,156,0, 255).normalized };
+
 
         RenderTexture tempRTARGB, tempRTRFloat;
         Texture2D tempT2DRGBA, tempT2DRFloat;
         private void Start()
         {
+            layersColors[0].a = 0.98f;
+            layersColors[1].a = 0.98f;
+            layersColors[2].a = 0.99f;
+            layersColors[3].a = 0.9f;
             Application.runInBackground = true;
             m_seed = UnityEngine.Random.Range(0, int.MaxValue);
 
@@ -367,6 +379,16 @@ namespace InterativeErosionProject
             m_advectSediment[1].filterMode = FilterMode.Bilinear;
             m_advectSediment[1].name = "Advect Sediment 1";
 
+            sedimentDeposition = new RenderTexture[2];
+            sedimentDeposition[0] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
+            sedimentDeposition[0].wrapMode = TextureWrapMode.Clamp;
+            sedimentDeposition[0].filterMode = FilterMode.Point;
+            sedimentDeposition[0].name = "sedimentDeposition 0";
+            sedimentDeposition[1] = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);// was RHalf
+            sedimentDeposition[1].wrapMode = TextureWrapMode.Clamp;
+            sedimentDeposition[1].filterMode = FilterMode.Point;
+            sedimentDeposition[1].name = "sedimentDeposition 1";
+
             m_tiltAngle = new RenderTexture(TEX_SIZE, TEX_SIZE, 0, RenderTextureFormat.RHalf);
             m_tiltAngle.wrapMode = TextureWrapMode.Clamp;
             m_tiltAngle.filterMode = FilterMode.Point;
@@ -492,11 +514,12 @@ namespace InterativeErosionProject
             m_erosionAndDepositionMat.SetFloat("_Layers", (float)TERRAIN_LAYERS);
             m_erosionAndDepositionMat.SetFloat("_DissolveLimit", dissolveLimit); //nash added it            
 
-            RenderTexture[] terrainAndSediment = new RenderTexture[2] { m_terrainField[WRITE], m_sedimentField[WRITE] };
+            RenderTexture[] terrainAndSediment = new RenderTexture[3] { m_terrainField[WRITE], m_sedimentField[WRITE], sedimentDeposition[WRITE] };
 
             RTUtility.MultiTargetBlit(terrainAndSediment, m_erosionAndDepositionMat);
             RTUtility.Swap(m_terrainField);
             RTUtility.Swap(m_sedimentField);
+            RTUtility.Swap(sedimentDeposition);
         }
         /// <summary>
         /// Transfers ground to regolith basing on water level, regolith level, max_regolith
@@ -609,6 +632,7 @@ namespace InterativeErosionProject
         {
             RTUtility.SetToPoint(m_terrainField);
             RTUtility.SetToPoint(m_waterField);
+            RTUtility.SetToPoint(sedimentDeposition);
 
             if (simulateWaterFlow)
             {
@@ -659,10 +683,10 @@ namespace InterativeErosionProject
 
             RTUtility.SetToBilinear(m_terrainField);
             RTUtility.SetToBilinear(m_waterField);
+            RTUtility.SetToBilinear(sedimentDeposition);
         }
         private void Update()
         {
-
             Simulate();
             UpdateMesh();
         }
@@ -673,10 +697,31 @@ namespace InterativeErosionProject
             //the y axis needs to be scaled 
             float scaleY = (float)TOTAL_GRID_SIZE / (float)TEX_SIZE;
 
-            m_landMat.SetFloat("_ScaleY", scaleY);
-            m_landMat.SetFloat("_TexSize", (float)TEX_SIZE);
-            m_landMat.SetTexture("_MainTex", m_terrainField[READ]);
-            m_landMat.SetFloat("_Layers", (float)TERRAIN_LAYERS);
+            if (currentOverlay == Overlay.Default)
+            {
+                overlays[currentOverlay.getID()].SetVector("_LayerColor0", layersColors[0]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor1", layersColors[1]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor2", layersColors[2]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor3", layersColors[3]);
+                
+                m_landMat.SetFloat("_ScaleY", scaleY);
+                m_landMat.SetFloat("_TexSize", (float)TEX_SIZE);
+                m_landMat.SetTexture("_MainTex", m_terrainField[READ]);
+                m_landMat.SetFloat("_Layers", (float)TERRAIN_LAYERS);
+            }
+            else if (currentOverlay == Overlay.Deposition)
+            {
+                overlays[currentOverlay.getID()].SetVector("_LayerColor0", layersColors[0]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor1", layersColors[1]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor2", layersColors[2]);
+                overlays[currentOverlay.getID()].SetVector("_LayerColor3", layersColors[3]);
+
+                overlays[currentOverlay.getID()].SetFloat("_ScaleY", scaleY);
+                overlays[currentOverlay.getID()].SetFloat("_TexSize", (float)TEX_SIZE);
+                overlays[currentOverlay.getID()].SetTexture("_MainTex", m_terrainField[READ]);
+                overlays[currentOverlay.getID()].SetTexture("_SedimentDepositionField", sedimentDeposition[READ]);
+                overlays[currentOverlay.getID()].SetFloat("_Layers", (float)TERRAIN_LAYERS);
+            }
 
             m_waterMat.SetTexture("_SedimentField", m_sedimentField[READ]);
             m_waterMat.SetTexture("_VelocityField", m_waterVelocity[READ]);
@@ -1187,6 +1232,14 @@ namespace InterativeErosionProject
         public void SetEvaporationPower(float value)
         {
             m_evaporationConstant = value;
+        }
+        public void SetOverlay(Overlay overlay)
+        {
+            this.currentOverlay = overlay;
+            foreach (var item in m_gridLand)
+            {
+                item.GetComponent<Renderer>().material = overlays[overlay.getID()];
+            }
         }
     }
 }

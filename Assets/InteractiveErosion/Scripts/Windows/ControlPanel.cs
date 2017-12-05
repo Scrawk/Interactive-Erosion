@@ -8,17 +8,12 @@ using UnityEngine.UI;
 
 namespace InterativeErosionProject
 {
-    public enum MaterialsForEditing
-    {
-        stone,
-        cobble, clay, sand,
-        water, watersource, waterdrain, ocean, sediment
-    }
+
 
     public class ControlPanel : Window
     {
         public Text text;
-        public Dropdown actionDD, materialChoiseDD;
+        public Dropdown actionDD, materialChoiseDD, overlayDD;
 
         public GameObject mapPointer;
         public DragPanel infoWindow;
@@ -39,7 +34,9 @@ namespace InterativeErosionProject
         // Use this for initialization
         void Start()
         {
-            rebuildDropDown();
+            RebuildActionDD();
+            RebuildMaterialDD();
+            RebuildOverlayDD();
         }
 
         // Update is called once per frame
@@ -101,7 +98,7 @@ namespace InterativeErosionProject
                 }
             }
         }
-        
+
         private Vector3 RaycastToMesh()
         {
             // Bit shift the index of the layer (8) to get a bit mask
@@ -131,7 +128,18 @@ namespace InterativeErosionProject
             selectedPoint = hit.textureCoord;
             return hit.point;
         }
-        void rebuildDropDown()
+        void RebuildOverlayDD()
+        {
+            //actionDD.interactable = true;
+            overlayDD.ClearOptions();
+
+            foreach (var next in Overlay.getAllPossible())
+            {
+                overlayDD.options.Add(new Dropdown.OptionData() { text = next.ToString() });
+            }
+            overlayDD.RefreshShownValue();
+        }
+        void RebuildActionDD()
         {
             //actionDD.interactable = true;
             actionDD.ClearOptions();
@@ -142,7 +150,9 @@ namespace InterativeErosionProject
             }
             actionDD.RefreshShownValue();
             //onActionDDChanged();
-
+        }
+        void RebuildMaterialDD()
+        {
             materialChoiseDD.ClearOptions();
             foreach (var next in Enum.GetValues(typeof(MaterialsForEditing)))
             {
@@ -160,6 +170,11 @@ namespace InterativeErosionProject
         {
             selectedMaterial = (MaterialsForEditing)materialChoiseDD.value;
         }
+        public void onOverlayDDChanged()
+        {
+            sim.SetOverlay(Overlay.getById(overlayDD.value));            
+        }
+
         //private Vector2 RaycastToPlain()
         //{
         //    Vector3 clickedPosition = default(Vector3);

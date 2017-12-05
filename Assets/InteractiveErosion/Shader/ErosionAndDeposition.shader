@@ -34,6 +34,7 @@ Shader "Erosion/ErosionAndDeposition"
 			{
 				float4 col0 : COLOR0;
 				float4 col1 : COLOR1;
+				float4 col2 : COLOR2;
 			};
 
 			v2f vert(appdata_base v)
@@ -118,6 +119,8 @@ Shader "Erosion/ErosionAndDeposition"
 
 				OUT.col0 = terrain + terrainDif;
 				OUT.col1 = float4(sediment + finalSedimentDif, 0.0, 0.0 ,0.0);
+				OUT.col2 = min(finalSedimentDif, 0.0)*-1;
+				//OUT.col2 = finalSedimentDif;
 
 				return OUT;
 			}

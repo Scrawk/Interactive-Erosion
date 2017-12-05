@@ -1,5 +1,5 @@
 
-Shader "Erosion/LandShader" 
+Shader "Erosion/DepositsOverlay" 
 {
 	//UNITY_SHADER_NO_UPGRADE
 	Properties 
@@ -21,8 +21,9 @@ Shader "Erosion/LandShader"
 		#pragma target 3.0
 		#pragma glsl
 
-		sampler2D _MainTex;
-		float3 _LayerColor0, _LayerColor1, _LayerColor2, _LayerColor3;
+		uniform sampler2D _MainTex;
+		uniform sampler2D _SedimentDepositionField;
+		uniform float3 _LayerColor0, _LayerColor1, _LayerColor2, _LayerColor3;
 		uniform float _ScaleY, _Layers, _TexSize;
 		
 		struct Input 
@@ -69,7 +70,10 @@ Shader "Erosion/LandShader"
 			o.Albedo = lerp(_LayerColor0, _LayerColor1, clamp(hts.y * 2.0, 0.0, 1.0));
 			o.Albedo = lerp(o.Albedo, _LayerColor2, clamp(hts.z * 2.0, 0.0, 1.0));
 			o.Albedo = lerp(o.Albedo, _LayerColor3, clamp(hts.w * 2.0, 0.0, 1.0));
-				
+			
+			float sediment = tex2D(_SedimentDepositionField, IN.uv_MainTex).x;
+			o.Albedo.r += sediment*300;			
+
 			o.Alpha = 1.0;
 			o.Normal = n;
 			
