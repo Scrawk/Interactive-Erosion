@@ -20,7 +20,7 @@ namespace InterativeErosionProject
         public ErosionSim sim;
 
         [SerializeField]
-        //private Plane referencePlane = new Plane(Vector3.up, Vector3.zero);
+        private Plane referencePlane = new Plane(Vector3.up, Vector3.zero);
 
         static public Vector2 selectedPoint;
         static public Action selectedAction = Action.Info;
@@ -48,7 +48,7 @@ namespace InterativeErosionProject
             {
                 // currently. works as for flat plane                
 
-                if (RaycastToMesh()<0)
+                if (RaycastToPlain() < 0)
                     mapPointer.SetActive(false);
                 else
                 {
@@ -113,7 +113,7 @@ namespace InterativeErosionProject
                     //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.white);
                     //selectedPoint = default(Vector2);
                     //Debug.Log("Missed");
-                    return  -1;
+                    return -1;
                 }
             }
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
@@ -173,29 +173,29 @@ namespace InterativeErosionProject
         }
         public void onOverlayDDChanged()
         {
-            sim.SetOverlay(Overlay.getById(overlayDD.value));            
+            sim.SetOverlay(Overlay.getById(overlayDD.value));
         }
 
-        //private Vector2 RaycastToPlain()
-        //{
-        //    Vector3 clickedPosition = default(Vector3);
-        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        //    float rayDistance;
-        //    if (referencePlane.Raycast(ray, out rayDistance))
-        //    {
-        //        // convert this to texture UV
-        //        clickedPosition = ray.GetPoint(rayDistance);
+        private int RaycastToPlain()
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            float rayDistance;
+            if (referencePlane.Raycast(ray, out rayDistance))
+            {
+                // convert this to texture UV
+                lastClick = ray.GetPoint(rayDistance);
 
-        //        int xInTexture = (int)(clickedPosition.x * 2f + ErosionSim.TOTAL_GRID_SIZE);
-        //        int yInTexture = (int)((clickedPosition.z) * 2f + ErosionSim.TOTAL_GRID_SIZE);
+                float xInTexture = (lastClick.x * 2f + ErosionSim.TOTAL_GRID_SIZE);
+                float yInTexture = (lastClick.z * 2f + ErosionSim.TOTAL_GRID_SIZE);
 
-        //        if (xInTexture >= 0 && xInTexture <= ErosionSim.MAX_TEX_INDEX
-        //            && yInTexture >= 0 && yInTexture <= ErosionSim.MAX_TEX_INDEX)
-        //            selectedPoint = new Point(xInTexture, yInTexture);
-        //        else
-        //            selectedPoint = null;
-        //    }
-        //    return clickedPosition;
-        //}
+                if (xInTexture >= 0 && xInTexture <= ErosionSim.MAX_TEX_INDEX
+                    && yInTexture >= 0 && yInTexture <= ErosionSim.MAX_TEX_INDEX)
+                    selectedPoint = new Vector2(xInTexture / (float)ErosionSim.MAX_TEX_INDEX, yInTexture / (float)ErosionSim.MAX_TEX_INDEX);
+                else
+                    return -10;
+
+            }
+            return 1;
+        }
     }
 }

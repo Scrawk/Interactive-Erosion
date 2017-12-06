@@ -708,9 +708,9 @@ namespace InterativeErosionProject
                     m_gridLand[idx].AddComponent<MeshRenderer>();
                     m_gridLand[idx].GetComponent<Renderer>().material = m_landMat;
                     m_gridLand[idx].GetComponent<MeshFilter>().mesh = mesh;
-                    m_gridLand[idx].AddComponent<MeshCollider>();
+                    //m_gridLand[idx].AddComponent<MeshCollider>();
                     //m_gridLand[idx].GetComponent<MeshCollider>().gameObject.layer = 8;
-                    m_gridLand[idx].GetComponent<MeshCollider>().sharedMesh = mesh;
+                    //m_gridLand[idx].GetComponent<MeshCollider>().sharedMesh = mesh;
 
                     m_gridLand[idx].transform.localPosition = new Vector3(-TOTAL_GRID_SIZE / 2 + posX, 0, -TOTAL_GRID_SIZE / 2 + posY);
                     m_gridLand[idx].transform.SetParent(this.transform);
@@ -772,10 +772,6 @@ namespace InterativeErosionProject
 
             return mesh;
         }
-
-
-
-
         public void AddToTerrainLayer(MaterialsForEditing layer, Vector2 point)
         {
             Vector4 layerMask = default(Vector4);
