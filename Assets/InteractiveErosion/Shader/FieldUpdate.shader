@@ -84,7 +84,7 @@ Shader "Erosion/FieldUpdate"
 				flowT = tex2D(_OutFlowField, IN.uv + float2(0, u));
 				flowB = tex2D(_OutFlowField, IN.uv + float2(0, -u));*/
 
-				//Flux in is inlow from neighour cells. Note for the cell on the left you need thats cells flow to the right (ie it flows into this cell)
+				//Flux in is inflow from neighour cells. Note for the cell on the left you need thats cells flow to the right (ie it flows into this cell)
 				float flowIN = flowL.y + flowR.x + flowT.w + flowB.z;
 
 				//Flux out is all out flows from this cell

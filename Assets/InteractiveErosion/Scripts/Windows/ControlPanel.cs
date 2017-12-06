@@ -172,7 +172,7 @@ namespace InterativeErosionProject
         }
         public void onOverlayDDChanged()
         {
-            sim.SetOverlay(Overlay.getById(materialChoiseDD.value));            
+            sim.SetOverlay(Overlay.getById(overlayDD.value));            
         }
 
         //private Vector2 RaycastToPlain()

@@ -39,7 +39,7 @@ Shader "Erosion/AdvectSediment"
 			
 			float4 frag(v2f IN) : COLOR
 			{
-			
+				// moves sediment according to water velocity and size of texture(?)
 				float2 velocity = _VelocityFactor * tex2D(_VelocityField, IN.uv).xy / _TexSize;
 				float2 targetPos = IN.uv - (T * velocity);
 				float targetData = tex2D(_MainTex, targetPos).r;	

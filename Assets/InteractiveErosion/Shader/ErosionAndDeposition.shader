@@ -120,8 +120,7 @@ Shader "Erosion/ErosionAndDeposition"
 				OUT.col0 = terrain + terrainDif;
 				OUT.col1 = float4(sediment + finalSedimentDif, 0.0, 0.0 ,0.0);
 				OUT.col2 = min(finalSedimentDif, 0.0)*-1;
-				//OUT.col2 = finalSedimentDif;
-
+				
 				return OUT;
 			}
 
