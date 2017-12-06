@@ -25,6 +25,7 @@ namespace InterativeErosionProject
         static public Vector2 selectedPoint;
         static public Action selectedAction = Action.Info;
         internal static MaterialsForEditing selectedMaterial;
+        private Vector3 lastClick;
 
         public override void Refresh()
         {
@@ -45,15 +46,14 @@ namespace InterativeErosionProject
             Refresh();
             if (selectedAction != Action.Nothing && Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
             {
-                // currently. works as for flat plane
-                var clickedPosition = RaycastToMesh();
+                // currently. works as for flat plane                
 
-                if (selectedPoint == null)
+                if (RaycastToMesh()<0)
                     mapPointer.SetActive(false);
                 else
                 {
                     mapPointer.SetActive(true);
-                    mapPointer.transform.position = clickedPosition;
+                    mapPointer.transform.position = lastClick;
 
                     // lift pointer at terrain height
                     var height = sim.getTerrainLevel(selectedPoint);
@@ -82,9 +82,9 @@ namespace InterativeErosionProject
                             if (selectedMaterial == MaterialsForEditing.water)
                                 sim.RemoveWater(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.watersource)
-                                sim.MoveWaterSource(default(Vector2));
+                                sim.RemoveWaterSource();
                             else if (selectedMaterial == MaterialsForEditing.waterdrain)
-                                sim.MoveWaterDrainage(default(Vector2));
+                                sim.RemoveWaterDrainage();
                             else if (selectedMaterial == MaterialsForEditing.ocean)
                                 sim.RemoveOcean(selectedPoint);
                             else if (selectedMaterial == MaterialsForEditing.sediment)
@@ -99,7 +99,7 @@ namespace InterativeErosionProject
             }
         }
 
-        private Vector3 RaycastToMesh()
+        private int RaycastToMesh()
         {
             // Bit shift the index of the layer (8) to get a bit mask
             //var layerMask = 1 << 5;
@@ -111,9 +111,9 @@ namespace InterativeErosionProject
             {
                 {
                     //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.white);
-                    selectedPoint = default(Vector2);
+                    //selectedPoint = default(Vector2);
                     //Debug.Log("Missed");
-                    return default(Vector2);// -1;
+                    return  -1;
                 }
             }
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
@@ -121,12 +121,13 @@ namespace InterativeErosionProject
 
             if (meshCollider == null || meshCollider.sharedMesh == null)
             {
-                selectedPoint = default(Vector2);
+                //selectedPoint = default(Vector2);
                 //Debug.Log("Missed");
-                return default(Vector2);//2;
+                return -2;
             }
             selectedPoint = hit.textureCoord;
-            return hit.point;
+            lastClick = hit.point;
+            return 1;
         }
         void RebuildOverlayDD()
         {

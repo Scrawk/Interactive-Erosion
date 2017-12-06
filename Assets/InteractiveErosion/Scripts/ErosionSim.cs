@@ -221,7 +221,7 @@ namespace InterativeErosionProject
             new Vector4(113,52,21,355).normalized,
             new Vector4(157,156,0, 255).normalized };
 
-        public RenderTexture sediment; 
+        public RenderTexture sediment;
 
         private void Start()
         {
@@ -402,7 +402,7 @@ namespace InterativeErosionProject
             ////Graphics.Blit(m_sedimentField.WRITE, m_sedimentField.READ, moveByLiquidMat);
             ////m_sedimentField.Swap();
 
-            
+
             moveByLiquidMat.SetFloat("T", TIME_STEP);
             moveByLiquidMat.SetTexture("_OutFlow", m_waterOutFlow.READ);
             moveByLiquidMat.SetTexture("_LuquidLevel", m_waterField.READ);
@@ -822,35 +822,30 @@ namespace InterativeErosionProject
         {
             m_sedimentField.ChangeValueGaussZeroControl(point, brushSize, brushPower * -1f / 50f, new Vector4(1f, 0f, 0f, 0f));
         }
+        internal void RemoveWaterSource()
+        {
+            m_waterInputAmount = 0f;
+        }
         internal void MoveWaterSource(Vector2 point)
         {
-            if (point == null)
-            {
-                m_waterInputAmount = 0f;
-            }
-            else
-            {
-                m_waterInputPoint = point;
-                //m_waterInputPoint.x = point.x / (float)TEX_SIZE;
-                //m_waterInputPoint.y = point.y / (float)TEX_SIZE;
-                m_waterInputRadius = brushSize;
-                m_waterInputAmount = brushPower;
-            }
+            m_waterInputPoint = point;
+            //m_waterInputPoint.x = point.x / (float)TEX_SIZE;
+            //m_waterInputPoint.y = point.y / (float)TEX_SIZE;
+            m_waterInputRadius = brushSize;
+            m_waterInputAmount = brushPower;
+
+        }
+        internal void RemoveWaterDrainage()
+        {
+            waterDrainageAmount = 0f;
         }
         internal void MoveWaterDrainage(Vector2 point)
         {
-            if (point == null)
-            {
-                waterDrainageAmount = 0f;
-            }
-            else
-            {
-                waterDrainagePoint = point;
-                //waterDrainagePoint.x = selectedPoint.x / (float)TEX_SIZE;
-                //waterDrainagePoint.y = selectedPoint.y / (float)TEX_SIZE;
-                waterDrainageRadius = brushSize;
-                waterDrainageAmount = brushPower;
-            }
+            waterDrainagePoint = point;
+            //waterDrainagePoint.x = selectedPoint.x / (float)TEX_SIZE;
+            //waterDrainagePoint.y = selectedPoint.y / (float)TEX_SIZE;
+            waterDrainageRadius = brushSize;
+            waterDrainageAmount = brushPower;
         }
         /// <summary>
         /// get rect-part of world texture according to world side
