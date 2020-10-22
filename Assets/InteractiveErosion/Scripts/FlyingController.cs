@@ -35,11 +35,11 @@ namespace InterativeErosionProject
                 move = new Vector3(0, 0, -1) * Time.deltaTime * m_speed;
 
             //move up
-            if (Input.GetKey(KeyCode.E))
+            if (Input.GetKey(KeyCode.Q))
                 move = new Vector3(0, -1, 0) * Time.deltaTime * m_speed;
 
             //move down
-            if (Input.GetKey(KeyCode.Q))
+            if (Input.GetKey(KeyCode.E))
                 move = new Vector3(0, 1, 0) * Time.deltaTime * m_speed;
 
             transform.Translate(move);
